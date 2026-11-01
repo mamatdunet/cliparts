@@ -294,3 +294,19 @@ body[data-bg="dark"] .tile .pic, body[data-bg="dark"] .stage, body[data-bg="dark
 .stage.k-web img { width: auto; height: auto; max-height: none; }
 .related-grid.k-photos button { padding: 0; overflow: hidden; }
 .related-grid.k-photos img { object-fit: cover; }
+
+/* Szene-Cliparts : pixel art */
+.tile.k-szene .pic { padding: 6%; }
+.tile.k-szene img { inset: 6%; width: 88%; height: 88%; }
+.stage.k-szene img { image-rendering: pixelated; }
+.about-cols section:nth-child(5) { border-top: 8px solid var(--ink); }
+
+/* Interrupteur +18 ans */
+.switch { display: flex; align-items: flex-start; gap: 12px; margin: 14px 0 4px; padding: 12px 14px; border: var(--stroke) solid var(--ink); border-radius: var(--radius-md); background: var(--surface-card); cursor: pointer; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch .track { flex: none; width: 46px; height: 26px; margin-top: 2px; border: var(--stroke) solid var(--ink); border-radius: var(--radius-pill); background: var(--neutral-200); position: relative; transition: background var(--dur-fast); }
+.switch .track::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; border: var(--stroke) solid var(--ink); transition: translate var(--dur-med) var(--ease-bounce); }
+.switch input:checked + .track { background: var(--red); }
+.switch input:checked + .track::after { translate: 20px 0; }
+.switch input:focus-visible + .track { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
+.switch small { display: block; font-size: 13px; color: var(--text-muted); line-height: 1.4; }

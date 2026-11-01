@@ -1,4 +1,4 @@
-"""Construit data/index.json, l'index unique des quatre collections, à partir des catalogues.
+"""Construit data/index.json, l'index unique des cinq collections, à partir des catalogues.
 Usage : python3 tools/build_index.py"""
 import json, os
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -6,6 +6,7 @@ pro = json.load(open(os.path.join(root, 'cliparts/pro/catalog.json')))
 mc = json.load(open(os.path.join(root, 'cliparts/mc/catalog.json')))
 photos = json.load(open(os.path.join(root, 'cliparts/photos/catalog.json')))
 web = json.load(open(os.path.join(root, 'cliparts/web/catalog.json')))
+szene = json.load(open(os.path.join(root, 'cliparts/szene/catalog.json')))
 
 collections = [
     {'id': 'pro', 'nom': 'Cliparts Pro', 'annee': 1998, 'editeur': 'TLC Domus / Solver S.A.',
@@ -16,6 +17,8 @@ collections = [
      'source': 'https://archive.org/details/4366-mc', 'ext': 'jpg'},
     {'id': 'web', 'nom': 'Images web', 'annee': 2001, 'editeur': 'Hemera, CD Micro Application',
      'source': 'https://archive.org/details/4366-mc', 'ext': 'gif'},
+    {'id': 'szene', 'nom': 'Szene-Cliparts', 'annee': 2001, 'editeur': 'E.D.V. CD-ROM GmbH',
+     'source': 'https://archive.org/details/szene-cliparts-2001', 'ext': 'png'},
 ]
 themes, items = [], []
 tidx = {}
@@ -40,8 +43,17 @@ for k, nom, un in web['themes']:
     themes.append([3, k, nom])
 for t, n in web['items']:
     items.append([base + t, n, web['themes'][t][2]])
+# Szene-Cliparts : images de la scène démo ; « adult » liste les images masquées sans l'option +18 ans
+adult = []
+base = len(themes)
+for k, nom in szene['themes']:
+    themes.append([4, k, nom])
+for it in szene['items']:
+    if len(it) > 3:
+        adult.append(len(items))
+    items.append([base + it[0], it[1]] + ([it[2]] if it[2] else []))
 
-out = {'v': 1, 'collections': collections, 'persos': pro['persos'], 'themes': themes, 'items': items}
+out = {'v': 1, 'collections': collections, 'persos': pro['persos'], 'themes': themes, 'items': items, 'adult': adult}
 os.makedirs(os.path.join(root, 'data'), exist_ok=True)
 json.dump(out, open(os.path.join(root, 'data/index.json'), 'w'), ensure_ascii=False, separators=(',', ':'))
 print(len(items), 'items', len(themes), 'themes')
