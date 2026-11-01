@@ -1,8 +1,8 @@
 # Cliparthèque
 
-Une bibliothèque web pour parcourir, rechercher et télécharger **63 259 images** issues de deux
+Une bibliothèque web pour parcourir, rechercher et télécharger **65 603 images** issues de trois
 CD-ROM de la fin des années 90 : 31 999 cliparts vectoriels (convertis de WMF en SVG),
-3 010 photos et 28 250 images web.
+3 010 photos, 28 250 images web et 2 344 graphismes de la scène démo.
 
 - **Cliparts Pro 12.000** (TLC Domus / Solver S.A., 1998) : 1 000 sujets nommés en français,
   en 12 000 dessins (chaque sujet seul ou avec l'un des 13 personnages récurrents).
@@ -11,6 +11,11 @@ CD-ROM de la fin des années 90 : 31 999 cliparts vectoriels (convertis de WMF e
 - **Photos** (même CD) : 3 010 photos JPG en 640 px, dans les 264 dossiers du CD.
 - **Images web** (même CD, Hemera Technologies 2001) : 25 000 boutons, 1 000 icônes, 1 000 puces,
   1 000 flèches et 250 traits de séparation en GIF, chaque forme en 10 couleurs.
+- **Szene-Cliparts** (E.D.V. CD-ROM GmbH, 2001) : 2 344 images de la scène démo Amiga et PC
+  (logos de groupes, fantasy, visages, science-fiction…), converties de PCX en PNG.
+  Source : [archive.org/details/szene-cliparts-2001](https://archive.org/details/szene-cliparts-2001).
+  196 images avec nudité ou contenu suggestif (liste : `tools/szene_adult.json`) ne s'affichent
+  qu'une fois l'option « +18 ans » activée dans le panneau Crédits.
 
 Ce que fait le site :
 
@@ -38,15 +43,17 @@ puis http://localhost:8765. Déployable tel quel sur Vercel (voir `vercel.json`)
 
 ```
 index.html, assets/        l'interface (HTML, CSS, JS sans dépendance)
-data/index.json            l'index unique des quatre collections
+data/index.json            l'index unique des cinq collections
 cliparts/pro/<thème>/      Cliparts Pro : <thème>_<personnage>_<numéro>.svg + catalog.json
 cliparts/mc/<thème>/       Micro Application : <numéro>.svg + catalog.json
 cliparts/photos/<thème>/   Photos : <numéro>.jpg + catalog.json
 cliparts/web/<type>/       Images web : <forme><type><couleur>.gif + catalog.json
+cliparts/szene/<thème>/    Szene-Cliparts : <nom>.png + catalog.json
 tools/                     conversion WMF → SVG et construction de l'index
 ```
 
-`data/index.json` : `themes` = `[collection, dossier, nom]`, `items` = `[thème, fichier, nom?, personnage?]`.
+`data/index.json` : `themes` = `[collection, dossier, nom]`, `items` = `[thème, fichier, nom?, personnage?]`,
+`adult` = indices des images réservées à l'option +18 ans.
 
 ## Refaire la conversion
 
@@ -57,6 +64,7 @@ convertis depuis les images ISO des CD (non versionnées ici) :
 python3 tools/build.py <NEWCLIP2 extrait de ClipartsPro.iso> cliparts/pro
 python3 tools/build_mc.py <Clipart extrait de 4366MC.iso> cliparts/mc
 python3 tools/build_extras.py <dossier où Photos/ et WebGen/ de 4366MC.iso sont extraits>
+python3 tools/build_szene.py <GRAPHICS extrait de Szene-Cliparts (2001).iso>   # nécessite Pillow
 python3 tools/build_index.py
 ```
 

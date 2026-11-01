@@ -9,14 +9,14 @@
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* stockage indisponible */ } },
   };
-  const COLL_COLOR = { '': 'var(--green)', pro: 'var(--blue)', mc: 'var(--red)', photos: 'var(--yellow)', web: 'var(--neutral-500)' };
+  const COLL_COLOR = { '': 'var(--green)', pro: 'var(--blue)', mc: 'var(--red)', photos: 'var(--yellow)', web: 'var(--neutral-500)', szene: 'var(--ink)' };
   // Mots-clés en plus pour les types d'images web (noms anglais du CD compris)
   const KW = { boutons: 'button', icones: 'icon', puces: 'bullet', fleches: 'arrow', traits: 'ligne separateur line' };
-  const COLL_IDS = ['pro', 'mc', 'photos', 'web'];
+  const COLL_IDS = ['pro', 'mc', 'photos', 'web', 'szene'];
 
-  let DB, ITEMS = [], THEMES = [], VARIANTS = new Map(), BY_THEME = [], EXT = {};
+  let DB, ITEMS = [], THEMES = [], VARIANTS = new Map(), BY_THEME = [], EXT = {}, ADULT = new Set();
   let results = [];
-  const state = { q: '', c: '', t: -1, fav: false, seed: 0, bg: store.get('bg', 'white'), size: store.get('size', 148) };
+  const state = { q: '', c: '', t: -1, fav: false, seed: 0, bg: store.get('bg', 'white'), size: store.get('size', 148), adult: store.get('adult', false) === true };
   const favs = new Set(store.get('favs', []));
 
   const grid = $('#grid');
@@ -29,6 +29,7 @@
   function init(db) {
     DB = db;
     for (const c of db.collections) EXT[c.id] = c.ext;
+    ADULT = new Set(db.adult || []);
     THEMES = db.themes.map(([c, slug, nom], i) => ({ i, c: db.collections[c].id, slug, nom, key: db.collections[c].id + ':' + slug, norm: norm(nom), total: 0 }));
     ITEMS = db.items.map(([t, f, nom, v], i) => {
       const th = THEMES[t];
@@ -59,7 +60,7 @@
   const hashItem = () => new URLSearchParams(location.hash.slice(1)).get('i');
   function openFromHash(open) {
     const it = open && ITEMS.find((x) => x.key === open);
-    if (it) openDetail(it.i); else if (dlg.open) dlg.close();
+    if (it && visible(it.i)) openDetail(it.i); else if (dlg.open) dlg.close();
   }
 
   // ---------- État <-> URL ----------
@@ -92,6 +93,8 @@
   });
 
   // ---------- Filtrage ----------
+  // Les images marquées +18 ans n'apparaissent nulle part tant que l'option n'est pas activée
+  const visible = (i) => state.adult || !ADULT.has(i);
   function rng(seed) {
     return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   }
@@ -103,12 +106,13 @@
 
   function update() {
     const toks = norm(state.q).split(/[^a-z0-9]+/).filter(Boolean);
-    const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0 };
+    const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0, szene: 0 };
     const byTheme = new Uint32Array(THEMES.length);
     const out = [];
     const scores = new Float32Array(ITEMS.length);
     for (const it of ITEMS) {
       if (state.fav && !favs.has(it.path)) continue;
+      if (!visible(it.i)) continue;
       let ok = true, sc = 0;
       for (const tk of toks) {
         const at = it.hay.indexOf(tk);
@@ -153,7 +157,7 @@
   // ---------- Barre latérale ----------
   function renderColls(counts) {
     const box = $('#colls');
-    const list = [{ id: '', nom: 'Toutes les collections', sub: '2 CD-ROM, 1998-2002' }, ...DB.collections.map((c) => ({ id: c.id, nom: c.nom, sub: `${c.editeur.split(' (')[0]}, ${c.annee}` }))];
+    const list = [{ id: '', nom: 'Toutes les collections', sub: '3 CD-ROM, 1998-2002' }, ...DB.collections.map((c) => ({ id: c.id, nom: c.nom, sub: `${c.editeur.split(' (')[0]}, ${c.annee}` }))];
     box.innerHTML = list.map((c) => `<button class="coll" role="radio" type="button" data-c="${c.id}" aria-checked="${state.c === c.id}">
       <span class="dot" style="background:${COLL_COLOR[c.id]}"></span><span>${c.nom}<small>${c.sub}</small></span><span class="n">${counts ? fmt(counts[c.id]) : ''}</span></button>`).join('');
   }
@@ -172,7 +176,7 @@
     for (const th of THEMES) {
       if (state.c && th.c !== state.c) continue;
       const n = counts[th.i];
-      if (filtered && !n && th.i !== state.t) continue;
+      if (!n && th.i !== state.t) continue;
       if (f && !th.norm.includes(f)) continue;
       if (!state.c && th.c !== last) {
         last = th.c;
@@ -270,10 +274,17 @@
   $('#show-side').addEventListener('click', () => $('#side').classList.add('open'));
   $('#close-side').addEventListener('click', () => $('#side').classList.remove('open'));
   $('#about-btn').addEventListener('click', () => $('#about').showModal());
+  $('#adult').addEventListener('change', (e) => {
+    state.adult = e.target.checked;
+    store.set('adult', state.adult);
+    if (state.t >= 0 && !BY_THEME[state.t].some(visible)) state.t = -1;
+    update();
+  });
   function applyPrefs() {
     document.body.dataset.bg = state.bg;
     for (const b of document.querySelectorAll('#bg [data-bg]')) { b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', b.dataset.bg === state.bg); }
     $('#size').value = state.size;
+    $('#adult').checked = state.adult;
   }
   addEventListener('keydown', (e) => {
     if (e.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName) && !document.querySelector('dialog[open]')) { e.preventDefault(); $('#q').focus(); }
@@ -325,6 +336,7 @@
       const list = BY_THEME[it.t], k = list.indexOf(i), s = Math.max(0, Math.min(list.length - 14, k - 7));
       rel = list.slice(s, s + 14); title = 'Dans le même thème';
     }
+    rel = rel.filter(visible);
     $('#d-related-wrap').hidden = rel.length < 2;
     $('#d-related-title').textContent = title;
     $('#d-related').className = `related-grid k-${th.c}`;
