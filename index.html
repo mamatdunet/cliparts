@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cliparthèque</title>
+<meta name="description" content="32 000 cliparts vectoriels des CD-ROM Cliparts Pro (1998) et Micro Application (2002), à parcourir, rechercher et télécharger en SVG ou PNG.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="preload" href="data/index.json" as="fetch" crossorigin>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="./" aria-label="Cliparthèque, accueil">
+      <span class="bells" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span class="brand-name">Cliparthèque</span>
+    </a>
+    <label class="search">
+      <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Chercher : chat, gâteau, vélo…" autocomplete="off" spellcheck="false" aria-label="Rechercher">
+      <kbd>/</kbd>
+    </label>
+    <button class="btn ghost" id="about-btn" type="button">À propos</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="side" id="side" aria-label="Filtres">
+    <div class="side-head">
+      <h2>Collections</h2>
+      <button class="btn icon close-side" id="close-side" type="button" aria-label="Fermer les filtres"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="colls" id="colls" role="radiogroup" aria-label="Collection"></div>
+    <h2>Thèmes</h2>
+    <input class="theme-filter" id="theme-filter" type="search" placeholder="Filtrer les thèmes…" aria-label="Filtrer les thèmes">
+    <ul class="themes" id="themes"></ul>
+  </aside>
+
+  <main class="main">
+    <div class="bar">
+      <button class="btn small show-side" id="show-side" type="button">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtres
+      </button>
+      <p class="count" id="count" aria-live="polite">Chargement…</p>
+      <div class="chips" id="active"></div>
+      <div class="tools">
+        <button class="btn small toggle" id="fav-only" type="button" aria-pressed="false">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg><span>Favoris</span>
+        </button>
+        <button class="btn small" id="shuffle" type="button" title="Mélanger l'ordre">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h3c4 0 6 10 10 10h5M3 17h3c1.6 0 2.8-1.6 3.9-3.5M14.1 10.5C15.2 8.6 16.4 7 18 7h3M18 4l3 3-3 3M18 14l3 3-3 3"/></svg><span>Mélanger</span>
+        </button>
+        <div class="seg" role="radiogroup" aria-label="Fond des vignettes" id="bg">
+          <button type="button" data-bg="white" aria-label="Fond blanc" title="Fond blanc"></button>
+          <button type="button" data-bg="check" aria-label="Fond transparent" title="Damier"></button>
+          <button type="button" data-bg="dark" aria-label="Fond sombre" title="Fond sombre"></button>
+        </div>
+        <label class="size" title="Taille des vignettes">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>
+          <input id="size" type="range" min="88" max="240" step="4" value="148" aria-label="Taille des vignettes">
+        </label>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden>
+      <p class="empty-title">Rien trouvé.</p>
+      <p>Essayez un mot plus court, sans pluriel, ou un autre thème.</p>
+      <button class="btn" id="reset" type="button">Tout afficher</button>
+    </div>
+  </main>
+</div>
+
+<dialog class="sheet" id="detail" aria-labelledby="d-title">
+  <div class="sheet-in">
+    <div class="stage" id="d-stage">
+      <img id="d-img" alt="">
+      <button class="btn icon nav prev" id="d-prev" type="button" aria-label="Précédent"><svg class="ic" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+      <button class="btn icon nav next" id="d-next" type="button" aria-label="Suivant"><svg class="ic" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+    </div>
+    <div class="info">
+      <div class="info-head">
+        <p class="eyebrow" id="d-coll"></p>
+        <button class="btn icon" id="d-close" type="button" aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <h2 id="d-title"></h2>
+      <div class="meta" id="d-meta"></div>
+      <div class="actions">
+        <a class="btn primary" id="d-svg" download><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg>SVG</a>
+        <div class="png">
+          <button class="btn" id="d-png" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg>PNG</button>
+          <select id="d-png-size" aria-label="Taille du PNG">
+            <option value="512">512 px</option>
+            <option value="1024" selected>1024 px</option>
+            <option value="2048">2048 px</option>
+            <option value="4096">4096 px</option>
+          </select>
+        </div>
+        <button class="btn" id="d-copy" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copier le SVG</span></button>
+        <button class="btn icon fav" id="d-fav" type="button" aria-pressed="false" aria-label="Ajouter aux favoris"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>
+      </div>
+      <div class="related" id="d-related-wrap">
+        <h3 id="d-related-title"></h3>
+        <div class="related-grid" id="d-related"></div>
+      </div>
+      <p class="hint">← → pour naviguer · Échap pour fermer</p>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="sheet about" id="about" aria-labelledby="a-title">
+  <div class="about-in">
+    <div class="info-head">
+      <p class="eyebrow">À propos</p>
+      <button class="btn icon" type="button" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <h2 id="a-title">Deux CD-ROM, 32 000 dessins</h2>
+    <p>Tous les dessins viennent de deux CD-ROM de clip arts de la fin des années 90, dont les fichiers WMF ont été convertis en SVG. Ils restent vectoriels : on peut les agrandir sans perte, les recolorer, les exporter en PNG à la taille voulue.</p>
+    <div class="about-cols">
+      <section>
+        <h3>Cliparts Pro 12.000</h3>
+        <p class="small">TLC Domus (Amsterdam), dessins de Solver S.A. (Santiago du Chili), 1996-1998. 1 000 sujets nommés en français, chacun dans jusqu'à 14 variantes (seul, ou avec monsieur, madame, l'ado, le gamin, le diablotin…).</p>
+        <p class="small"><strong>Licence d'origine</strong> : reproduction libre dans des publications imprimées ou numériques ; interdit de revendre les images en tant que collection de clip arts ; interdit pour la télévision et la publicité ; usage commercial à signaler à Solver S.A.</p>
+        <p class="small"><a href="https://archive.org/details/cliparts-pro" target="_blank" rel="noopener">Source : archive.org</a></p>
+      </section>
+      <section>
+        <h3>Plus de 50 000 Cliparts, vol. 1</h3>
+        <p class="small">Micro Application (réf. 4366MC), 2002. 19 999 dessins vectoriels rangés dans les 288 dossiers thématiques du CD (doublons écartés ; photos et boutons web non repris).</p>
+        <p class="small"><strong>Licence d'origine</strong> : les images peuvent être intégrées à vos propres créations et publiées sur tout support ; interdit de les revendre ou de les redistribuer séparément ; interdit pour des travaux obscènes, diffamatoires ou illégaux, et comme marque. © Micro Application et ses concédants.</p>
+        <p class="small"><a href="https://archive.org/details/4366-mc" target="_blank" rel="noopener">Source : archive.org</a></p>
+      </section>
+    </div>
+    <p class="small muted">Conversion reprise de l'atelier <a href="https://wordart-iagora.vercel.app/" target="_blank" rel="noopener">WordArt 97</a>. Interface aux couleurs d'Amuseurs.</p>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="assets/app.js"></script>
+</body>
+</html>
