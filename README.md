@@ -16,9 +16,9 @@ Ce que fait le site :
 
 - recherche instantanée sans accents ni majuscules (nom, thème, personnage, collection) ;
 - filtres par collection et par thème, avec le nombre de résultats ;
-- grille virtualisée : seules les vignettes visibles sont dans la page, même pour 32 000 dessins ;
+- grille virtualisée : seules les vignettes visibles sont dans la page, même pour 63 000 images ;
 - taille des vignettes réglable, fond blanc, damier ou sombre ;
-- fiche de chaque dessin : variantes ou dessins voisins, téléchargement SVG, export PNG
+- fiche de chaque image : variantes, couleurs ou images voisines, téléchargement au format d'origine, export PNG des SVG
   de 512 à 4 096 px, copie du SVG, favoris (gardés dans le navigateur) ;
 - adresse partageable : la recherche, les filtres et le dessin ouvert sont dans l'URL.
 
@@ -38,7 +38,7 @@ puis http://localhost:8765. Déployable tel quel sur Vercel (voir `vercel.json`)
 
 ```
 index.html, assets/        l'interface (HTML, CSS, JS sans dépendance)
-data/index.json            l'index unique des deux collections
+data/index.json            l'index unique des quatre collections
 cliparts/pro/<thème>/      Cliparts Pro : <thème>_<personnage>_<numéro>.svg + catalog.json
 cliparts/mc/<thème>/       Micro Application : <numéro>.svg + catalog.json
 cliparts/photos/<thème>/   Photos : <numéro>.jpg + catalog.json
