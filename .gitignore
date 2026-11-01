@@ -5,3 +5,4 @@
 cliparts/
 public/
 .vercel
+__pycache__/
