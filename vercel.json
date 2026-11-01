@@ -1,4 +1,7 @@
 {
+  "buildCommand": "bash tools/fetch_content.sh",
+  "outputDirectory": "public",
+  "installCommand": "",
   "cleanUrls": true,
   "headers": [
     { "source": "/cliparts/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }

@@ -1,0 +1,14 @@
+Plus de 50 000 Cliparts Volume 1 — Micro Application (réf. 4366MC, 2002)
+Source : https://archive.org/details/4366-mc
+
+19 999 dessins convertis depuis les fichiers WMF du dossier Clipart du CD-ROM en SVG (tools/build_mc.py),
+12 doublons écartés. Les photos et les images Web du CD ne sont pas reprises.
+  Thèmes : les 288 dossiers du CD (quelques noms anglais traduits).
+  Catalogue : catalog.json — themes : [dossier, nom] ; items : [indice du thème, fichier].
+  Fichier : cliparts/mc/<dossier>/<numéro>.svg
+
+Licence d'origine (LICENCE.TXT du CD, résumé) :
+  les images peuvent être intégrées à vos propres créations et publiées sur tout support ;
+  interdit de les revendre ou de les mettre à disposition séparément pour être réutilisées par d'autres ;
+  interdit pour des travaux obscènes, diffamatoires ou illégaux, et comme marque de commerce.
+  © Micro Application et ses concédants.

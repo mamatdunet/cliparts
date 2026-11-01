@@ -1,4 +1,4 @@
-"""Construit data/index.json, l'index unique des six collections, à partir des catalogues.
+"""Construit data/index.json, l'index unique des sept collections, à partir des catalogues.
 Usage : python3 tools/build_index.py"""
 import json, os
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -8,6 +8,7 @@ photos = json.load(open(os.path.join(root, 'cliparts/photos/catalog.json')))
 web = json.load(open(os.path.join(root, 'cliparts/web/catalog.json')))
 szene = json.load(open(os.path.join(root, 'cliparts/szene/catalog.json')))
 imsi = json.load(open(os.path.join(root, 'cliparts/imsi/catalog.json')))
+anim = json.load(open(os.path.join(root, 'cliparts/anim/catalog.json')))
 
 collections = [
     {'id': 'pro', 'nom': 'Cliparts Pro', 'annee': 1998, 'editeur': 'TLC Domus / Solver S.A.',
@@ -22,6 +23,8 @@ collections = [
      'source': 'https://archive.org/details/szene-cliparts-2001', 'ext': 'png'},
     {'id': 'imsi', 'nom': 'ClipArt & More', 'annee': 2003, 'editeur': 'IMSI',
      'source': 'https://archive.org/details/imsi-clipart-more-2.5-million-3-cd-rom', 'ext': 'svg'},
+    {'id': 'anim', 'nom': 'Animations web', 'annee': 2003, 'editeur': 'IMSI, CD 2 de ClipArt & More',
+     'source': 'https://archive.org/details/imsi-clipart-more-2.5-million-3-cd-rom', 'ext': 'gif'},
 ]
 themes, items = [], []
 tidx = {}
@@ -60,6 +63,12 @@ base = len(themes)
 for k, nom, top in imsi['themes']:
     themes.append([5, k, nom])
 for t, n, nom, kw in imsi['items']:
+    items.append([base + t, n, nom, 0, kw])
+# Animations web (IMSI, CD 2) : même format, mots-clés = type d'animation et fond
+base = len(themes)
+for k, nom in anim['themes']:
+    themes.append([6, k, nom])
+for t, n, nom, kw in anim['items']:
     items.append([base + t, n, nom, 0, kw])
 
 out = {'v': 1, 'collections': collections, 'persos': pro['persos'], 'themes': themes, 'items': items, 'adult': adult}

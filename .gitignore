@@ -1,3 +1,7 @@
 *.iso
 .DS_Store
 .claude/
+# Images : hors dépôt, dans les archives de la Release GitHub (voir tools/fetch_content.sh)
+cliparts/
+public/
+.vercel

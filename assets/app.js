@@ -9,10 +9,13 @@
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* stockage indisponible */ } },
   };
-  const COLL_COLOR = { '': 'var(--green)', pro: 'var(--blue)', mc: 'var(--red)', photos: 'var(--yellow)', web: 'var(--neutral-500)', szene: 'var(--ink)', imsi: 'var(--green-700)' };
+  const COLL_COLOR = { '': 'var(--green)', pro: 'var(--blue)', mc: 'var(--red)', photos: 'var(--yellow)', web: 'var(--neutral-500)', szene: 'var(--ink)', imsi: 'var(--green-700)', anim: 'var(--red-700)' };
   // Mots-clés en plus pour les types d'images web (noms anglais du CD compris)
   const KW = { boutons: 'button', icones: 'icon', puces: 'bullet', fleches: 'arrow', traits: 'ligne separateur line' };
-  const COLL_IDS = ['pro', 'mc', 'photos', 'web', 'szene', 'imsi'];
+  // Animations web : un bouton existe en 25 couleurs (même animation, même fond), un objet ou un mot en 3 fonds
+  const animKey = (t, f) => THEMES[t].slug.startsWith('bouton') ? t + f[1] + f.slice(-1) : t + f.slice(0, -1);
+  const LAST = new Set(['web', 'anim']);
+  const COLL_IDS = ['pro', 'mc', 'photos', 'web', 'szene', 'imsi', 'anim'];
 
   let DB, ITEMS = [], THEMES = [], VARIANTS = new Map(), BY_THEME = [], EXT = {}, ADULT = new Set();
   let results = [];
@@ -42,7 +45,7 @@
       it.nname = norm(name);
       it.hay = norm([name, perso, th.nom, db.collections[db.themes[t][0]].nom, KW[th.slug] || '', kw || '', f].join(' '));
       // Variantes : personnages (Cliparts Pro) ou couleurs d'une même forme (images web)
-      const k = th.c === 'pro' ? f.slice(0, 1) + f.slice(3) : th.c === 'web' ? t + f.slice(0, 4) : '';
+      const k = th.c === 'pro' ? f.slice(0, 1) + f.slice(3) : th.c === 'web' ? t + f.slice(0, 4) : th.c === 'anim' ? animKey(t, f) : '';
       if (k) {
         if (!VARIANTS.has(k)) VARIANTS.set(k, []);
         VARIANTS.get(k).push(i);
@@ -106,7 +109,7 @@
 
   function update() {
     const toks = norm(state.q).split(/[^a-z0-9]+/).filter(Boolean);
-    const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0, szene: 0, imsi: 0 };
+    const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0, szene: 0, imsi: 0, anim: 0 };
     const byTheme = new Uint32Array(THEMES.length);
     const out = [];
     const scores = new Float32Array(ITEMS.length);
@@ -134,7 +137,7 @@
     const seed = state.seed || (home ? dailySeed() : 0);
     if (seed) shuffle(out, seed);
     // À l'accueil, les 28 000 boutons et puces passent après les dessins et les photos
-    if (home && !state.seed && !state.c) out.sort((a, b) => (THEMES[ITEMS[a].t].c === 'web') - (THEMES[ITEMS[b].t].c === 'web'));
+    if (home && !state.seed && !state.c) out.sort((a, b) => LAST.has(THEMES[ITEMS[a].t].c) - LAST.has(THEMES[ITEMS[b].t].c));
     else if (toks.length) out.sort((a, b) => scores[b] - scores[a] || a - b);
     results = out;
 
@@ -157,7 +160,7 @@
   // ---------- Barre latérale ----------
   function renderColls(counts) {
     const box = $('#colls');
-    const list = [{ id: '', nom: 'Toutes les collections', sub: '4 CD-ROM, 1998-2003' }, ...DB.collections.map((c) => ({ id: c.id, nom: c.nom, sub: `${c.editeur.split(' (')[0]}, ${c.annee}` }))];
+    const list = [{ id: '', nom: 'Toutes les collections', sub: '5 CD-ROM, 1998-2003' }, ...DB.collections.map((c) => ({ id: c.id, nom: c.nom, sub: `${c.editeur.split(' (')[0]}, ${c.annee}` }))];
     box.innerHTML = list.map((c) => `<button class="coll" role="radio" type="button" data-c="${c.id}" aria-checked="${state.c === c.id}">
       <span class="dot" style="background:${COLL_COLOR[c.id]}"></span><span>${c.nom}<small>${c.sub}</small></span><span class="n">${counts ? fmt(counts[c.id]) : ''}</span></button>`).join('');
   }
@@ -323,7 +326,7 @@
         const f = $('#d-file');
         if (f && img.naturalWidth) f.textContent = `${it.f}.${EXT[th.c]} · ${img.naturalWidth}×${img.naturalHeight} px`;
         // Les images web sont minuscules : on les agrandit en pixels nets, sans dépasser la scène
-        img.style.width = th.c === 'web' ? Math.min(img.naturalWidth * 4, 440) + 'px' : '';
+        img.style.width = th.c === 'web' || th.c === 'anim' ? Math.min(img.naturalWidth * 4, 440) + 'px' : '';
       };
       img.complete ? dims() : img.addEventListener('load', dims, { once: true });
     }
@@ -332,6 +335,7 @@
     let rel, title;
     if (th.c === 'pro') { rel = VARIANTS.get(it.f.slice(0, 1) + it.f.slice(3)) || []; title = 'Toutes les variantes'; }
     else if (th.c === 'web') { rel = VARIANTS.get(it.t + it.f.slice(0, 4)) || []; title = 'Toutes les couleurs'; }
+    else if (th.c === 'anim') { rel = VARIANTS.get(animKey(it.t, it.f)) || []; title = THEMES[it.t].slug.startsWith('bouton') ? 'Toutes les couleurs' : 'Tous les fonds'; }
     else {
       const list = BY_THEME[it.t], k = list.indexOf(i), s = Math.max(0, Math.min(list.length - 14, k - 7));
       rel = list.slice(s, s + 14); title = 'Dans le même thème';
