@@ -1,4 +1,4 @@
-"""Construit data/index.json, l'index unique des cinq collections, à partir des catalogues.
+"""Construit data/index.json, l'index unique des six collections, à partir des catalogues.
 Usage : python3 tools/build_index.py"""
 import json, os
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -7,6 +7,7 @@ mc = json.load(open(os.path.join(root, 'cliparts/mc/catalog.json')))
 photos = json.load(open(os.path.join(root, 'cliparts/photos/catalog.json')))
 web = json.load(open(os.path.join(root, 'cliparts/web/catalog.json')))
 szene = json.load(open(os.path.join(root, 'cliparts/szene/catalog.json')))
+imsi = json.load(open(os.path.join(root, 'cliparts/imsi/catalog.json')))
 
 collections = [
     {'id': 'pro', 'nom': 'Cliparts Pro', 'annee': 1998, 'editeur': 'TLC Domus / Solver S.A.',
@@ -19,6 +20,8 @@ collections = [
      'source': 'https://archive.org/details/4366-mc', 'ext': 'gif'},
     {'id': 'szene', 'nom': 'Szene-Cliparts', 'annee': 2001, 'editeur': 'E.D.V. CD-ROM GmbH',
      'source': 'https://archive.org/details/szene-cliparts-2001', 'ext': 'png'},
+    {'id': 'imsi', 'nom': 'ClipArt & More', 'annee': 2003, 'editeur': 'IMSI',
+     'source': 'https://archive.org/details/imsi-clipart-more-2.5-million-3-cd-rom', 'ext': 'svg'},
 ]
 themes, items = [], []
 tidx = {}
@@ -52,6 +55,12 @@ for it in szene['items']:
     if len(it) > 3:
         adult.append(len(items))
     items.append([base + it[0], it[1]] + ([it[2]] if it[2] else []))
+# ClipArt & More (IMSI) : 5e champ = mots-clés (français et anglais du CD) pour la recherche
+base = len(themes)
+for k, nom, top in imsi['themes']:
+    themes.append([5, k, nom])
+for t, n, nom, kw in imsi['items']:
+    items.append([base + t, n, nom, 0, kw])
 
 out = {'v': 1, 'collections': collections, 'persos': pro['persos'], 'themes': themes, 'items': items, 'adult': adult}
 os.makedirs(os.path.join(root, 'data'), exist_ok=True)

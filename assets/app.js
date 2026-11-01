@@ -9,10 +9,10 @@
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* stockage indisponible */ } },
   };
-  const COLL_COLOR = { '': 'var(--green)', pro: 'var(--blue)', mc: 'var(--red)', photos: 'var(--yellow)', web: 'var(--neutral-500)', szene: 'var(--ink)' };
+  const COLL_COLOR = { '': 'var(--green)', pro: 'var(--blue)', mc: 'var(--red)', photos: 'var(--yellow)', web: 'var(--neutral-500)', szene: 'var(--ink)', imsi: 'var(--green-700)' };
   // Mots-clés en plus pour les types d'images web (noms anglais du CD compris)
   const KW = { boutons: 'button', icones: 'icon', puces: 'bullet', fleches: 'arrow', traits: 'ligne separateur line' };
-  const COLL_IDS = ['pro', 'mc', 'photos', 'web', 'szene'];
+  const COLL_IDS = ['pro', 'mc', 'photos', 'web', 'szene', 'imsi'];
 
   let DB, ITEMS = [], THEMES = [], VARIANTS = new Map(), BY_THEME = [], EXT = {}, ADULT = new Set();
   let results = [];
@@ -31,7 +31,7 @@
     for (const c of db.collections) EXT[c.id] = c.ext;
     ADULT = new Set(db.adult || []);
     THEMES = db.themes.map(([c, slug, nom], i) => ({ i, c: db.collections[c].id, slug, nom, key: db.collections[c].id + ':' + slug, norm: norm(nom), total: 0 }));
-    ITEMS = db.items.map(([t, f, nom, v], i) => {
+    ITEMS = db.items.map(([t, f, nom, v, kw], i) => {
       const th = THEMES[t];
       th.total++;
       const perso = v ? db.persos[v.toUpperCase()] || '' : '';
@@ -40,7 +40,7 @@
       const key = `${th.c}/${th.slug}/${f}`;
       const it = { i, t, f, name, perso, label, key, path: `cliparts/${key}.${EXT[th.c]}` };
       it.nname = norm(name);
-      it.hay = norm([name, perso, th.nom, db.collections[db.themes[t][0]].nom, KW[th.slug] || '', f].join(' '));
+      it.hay = norm([name, perso, th.nom, db.collections[db.themes[t][0]].nom, KW[th.slug] || '', kw || '', f].join(' '));
       // Variantes : personnages (Cliparts Pro) ou couleurs d'une même forme (images web)
       const k = th.c === 'pro' ? f.slice(0, 1) + f.slice(3) : th.c === 'web' ? t + f.slice(0, 4) : '';
       if (k) {
@@ -106,7 +106,7 @@
 
   function update() {
     const toks = norm(state.q).split(/[^a-z0-9]+/).filter(Boolean);
-    const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0, szene: 0 };
+    const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0, szene: 0, imsi: 0 };
     const byTheme = new Uint32Array(THEMES.length);
     const out = [];
     const scores = new Float32Array(ITEMS.length);
@@ -157,7 +157,7 @@
   // ---------- Barre latérale ----------
   function renderColls(counts) {
     const box = $('#colls');
-    const list = [{ id: '', nom: 'Toutes les collections', sub: '3 CD-ROM, 1998-2002' }, ...DB.collections.map((c) => ({ id: c.id, nom: c.nom, sub: `${c.editeur.split(' (')[0]}, ${c.annee}` }))];
+    const list = [{ id: '', nom: 'Toutes les collections', sub: '4 CD-ROM, 1998-2003' }, ...DB.collections.map((c) => ({ id: c.id, nom: c.nom, sub: `${c.editeur.split(' (')[0]}, ${c.annee}` }))];
     box.innerHTML = list.map((c) => `<button class="coll" role="radio" type="button" data-c="${c.id}" aria-checked="${state.c === c.id}">
       <span class="dot" style="background:${COLL_COLOR[c.id]}"></span><span>${c.nom}<small>${c.sub}</small></span><span class="n">${counts ? fmt(counts[c.id]) : ''}</span></button>`).join('');
   }
