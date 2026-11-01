@@ -77,9 +77,13 @@ def to_svg(path,fillrule=False):
     if not shapes: raise ValueError('empty')
     x0,y0,x1,y1=bounds(shapes); m=max(s[2] for s in shapes)//2+2
     x0-=m;y0-=m;x1+=m;y1+=m
-    root='viewBox="%d %d %d %d" stroke-width="1" stroke-linejoin="round"'%(x0,y0,x1-x0,y1-y0)
+    # negative window extents flip the axis (IMSI drawings are stored upside down this way)
+    fx=-1 if ext and ext[0]<0 else 1; fy=-1 if ext and ext[1]<0 else 1
+    vx=x0 if fx>0 else -x1; vy=y0 if fy>0 else -y1
+    root='viewBox="%d %d %d %d" stroke-width="1" stroke-linejoin="round"'%(vx,vy,x1-x0,y1-y0)
     if fillrule: root+=' fill-rule="evenodd"'
     out=['<svg xmlns="http://www.w3.org/2000/svg" %s>'%root]
+    if fx<0 or fy<0: out.append('<g transform="scale(%d %d)">'%(fx,fy))
     cur=None
     for fill,stroke,sw,subs,closed,alt in shapes:
         key=(fill,stroke,sw,fillrule and not alt)
@@ -92,6 +96,7 @@ def to_svg(path,fillrule=False):
         d=''.join(rel(sub,closed) for sub in subs if sub)
         out.append('<path d="%s"/>'%d)
     if cur is not None: out.append('</g>')
+    if fx<0 or fy<0: out.append('</g>')
     out.append('</svg>')
     return ''.join(out)
 def to_png(path,size=160):

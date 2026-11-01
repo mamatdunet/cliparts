@@ -1,7 +1,7 @@
 # Cliparthèque
 
-Une bibliothèque web pour parcourir, rechercher et télécharger **65 603 images** issues de trois
-CD-ROM de la fin des années 90 : 31 999 cliparts vectoriels (convertis de WMF en SVG),
+Une bibliothèque web pour parcourir, rechercher et télécharger **81 266 images** issues de quatre
+CD-ROM de 1998 à 2003 : 47 662 cliparts vectoriels (convertis de WMF en SVG),
 3 010 photos, 28 250 images web et 2 344 graphismes de la scène démo.
 
 - **Cliparts Pro 12.000** (TLC Domus / Solver S.A., 1998) : 1 000 sujets nommés en français,
@@ -16,12 +16,16 @@ CD-ROM de la fin des années 90 : 31 999 cliparts vectoriels (convertis de WMF e
   Source : [archive.org/details/szene-cliparts-2001](https://archive.org/details/szene-cliparts-2001).
   196 images avec nudité ou contenu suggestif (liste : `tools/szene_adult.json`) ne s'affichent
   qu'une fois l'option « +18 ans » activée dans le panneau Crédits.
+- **ClipArt & More 2.5 Million** (IMSI, 2003), CD 1 : 15 663 dessins en 115 thèmes, avec les mots-clés
+  anglais du CD et une traduction française des dossiers et des mots-clés courants (`tools/imsi_fr.json`).
+  Source : [archive.org/details/imsi-clipart-more-2.5-million-3-cd-rom](https://archive.org/details/imsi-clipart-more-2.5-million-3-cd-rom).
+  Le CD 2 (images web animées) et le CD 3 (sons) ne sont pas repris.
 
 Ce que fait le site :
 
-- recherche instantanée sans accents ni majuscules (nom, thème, personnage, collection) ;
+- recherche instantanée sans accents ni majuscules (nom, thème, personnage, collection, mots-clés) ;
 - filtres par collection et par thème, avec le nombre de résultats ;
-- grille virtualisée : seules les vignettes visibles sont dans la page, même pour 63 000 images ;
+- grille virtualisée : seules les vignettes visibles sont dans la page, même pour 81 000 images ;
 - taille des vignettes réglable, fond blanc, damier ou sombre ;
 - fiche de chaque image : variantes, couleurs ou images voisines, téléchargement au format d'origine, export PNG des SVG
   de 512 à 4 096 px, copie du SVG, favoris (gardés dans le navigateur) ;
@@ -43,16 +47,17 @@ puis http://localhost:8765. Déployable tel quel sur Vercel (voir `vercel.json`)
 
 ```
 index.html, assets/        l'interface (HTML, CSS, JS sans dépendance)
-data/index.json            l'index unique des cinq collections
+data/index.json            l'index unique des six collections
 cliparts/pro/<thème>/      Cliparts Pro : <thème>_<personnage>_<numéro>.svg + catalog.json
 cliparts/mc/<thème>/       Micro Application : <numéro>.svg + catalog.json
 cliparts/photos/<thème>/   Photos : <numéro>.jpg + catalog.json
 cliparts/web/<type>/       Images web : <forme><type><couleur>.gif + catalog.json
 cliparts/szene/<thème>/    Szene-Cliparts : <nom>.png + catalog.json
+cliparts/imsi/<thème>/     ClipArt & More : <numéro>.svg + catalog.json
 tools/                     conversion WMF → SVG et construction de l'index
 ```
 
-`data/index.json` : `themes` = `[collection, dossier, nom]`, `items` = `[thème, fichier, nom?, personnage?]`,
+`data/index.json` : `themes` = `[collection, dossier, nom]`, `items` = `[thème, fichier, nom?, personnage?, mots-clés?]`,
 `adult` = indices des images réservées à l'option +18 ans.
 
 ## Refaire la conversion
@@ -65,6 +70,7 @@ python3 tools/build.py <NEWCLIP2 extrait de ClipartsPro.iso> cliparts/pro
 python3 tools/build_mc.py <Clipart extrait de 4366MC.iso> cliparts/mc
 python3 tools/build_extras.py <dossier où Photos/ et WebGen/ de 4366MC.iso sont extraits>
 python3 tools/build_szene.py <GRAPHICS extrait de Szene-Cliparts (2001).iso>   # nécessite Pillow
+python3 tools/build_imsi.py <CLIPART extrait de ClipaArt&More_2.5M_CD1_WIN.iso>
 python3 tools/build_index.py
 ```
 
