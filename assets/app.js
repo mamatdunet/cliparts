@@ -9,9 +9,12 @@
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* stockage indisponible */ } },
   };
-  const COLL_COLOR = { '': 'var(--green)', pro: 'var(--blue)', mc: 'var(--red)' };
+  const COLL_COLOR = { '': 'var(--green)', pro: 'var(--blue)', mc: 'var(--red)', photos: 'var(--yellow)', web: 'var(--neutral-500)' };
+  // Mots-clés en plus pour les types d'images web (noms anglais du CD compris)
+  const KW = { boutons: 'button', icones: 'icon', puces: 'bullet', fleches: 'arrow', traits: 'ligne separateur line' };
+  const COLL_IDS = ['pro', 'mc', 'photos', 'web'];
 
-  let DB, ITEMS = [], THEMES = [], VARIANTS = new Map(), BY_THEME = [];
+  let DB, ITEMS = [], THEMES = [], VARIANTS = new Map(), BY_THEME = [], EXT = {};
   let results = [];
   const state = { q: '', c: '', t: -1, fav: false, seed: 0, bg: store.get('bg', 'white'), size: store.get('size', 148) };
   const favs = new Set(store.get('favs', []));
@@ -25,6 +28,7 @@
 
   function init(db) {
     DB = db;
+    for (const c of db.collections) EXT[c.id] = c.ext;
     THEMES = db.themes.map(([c, slug, nom], i) => ({ i, c: db.collections[c].id, slug, nom, key: db.collections[c].id + ':' + slug, norm: norm(nom), total: 0 }));
     ITEMS = db.items.map(([t, f, nom, v], i) => {
       const th = THEMES[t];
@@ -32,26 +36,29 @@
       const perso = v ? db.persos[v.toUpperCase()] || '' : '';
       const name = nom ? nom.replace(/\.$/, '') : '';
       const label = name ? name + (perso ? ' · ' + perso : '') : th.nom;
-      const it = { i, t, f, name, perso, label, path: `cliparts/${th.c}/${th.slug}/${f}.svg` };
+      const key = `${th.c}/${th.slug}/${f}`;
+      const it = { i, t, f, name, perso, label, key, path: `cliparts/${key}.${EXT[th.c]}` };
       it.nname = norm(name);
-      it.hay = norm([name, perso, th.nom, db.collections[db.themes[t][0]].nom, f].join(' '));
-      if (th.c === 'pro') {
-        const k = f.slice(0, 1) + f.slice(3);
+      it.hay = norm([name, perso, th.nom, db.collections[db.themes[t][0]].nom, KW[th.slug] || '', f].join(' '));
+      // Variantes : personnages (Cliparts Pro) ou couleurs d'une même forme (images web)
+      const k = th.c === 'pro' ? f.slice(0, 1) + f.slice(3) : th.c === 'web' ? t + f.slice(0, 4) : '';
+      if (k) {
         if (!VARIANTS.has(k)) VARIANTS.set(k, []);
         VARIANTS.get(k).push(i);
       }
       (BY_THEME[t] ||= []).push(i);
       return it;
     });
+    const open = hashItem();
     readHash();
     applyPrefs();
     renderColls();
     update();
-    openFromHash();
+    openFromHash(open);
   }
-  function openFromHash() {
-    const open = new URLSearchParams(location.hash.slice(1)).get('i');
-    const it = open && ITEMS.find((x) => x.path === `cliparts/${open}.svg`);
+  const hashItem = () => new URLSearchParams(location.hash.slice(1)).get('i');
+  function openFromHash(open) {
+    const it = open && ITEMS.find((x) => x.key === open);
     if (it) openDetail(it.i); else if (dlg.open) dlg.close();
   }
 
@@ -59,7 +66,7 @@
   function readHash() {
     const p = new URLSearchParams(location.hash.slice(1));
     state.q = p.get('q') || '';
-    state.c = ['pro', 'mc'].includes(p.get('c')) ? p.get('c') : '';
+    state.c = COLL_IDS.includes(p.get('c')) ? p.get('c') : '';
     const th = THEMES.find((x) => x.key === p.get('t'));
     state.t = th ? th.i : -1;
     state.fav = p.get('fav') === '1';
@@ -73,15 +80,15 @@
     if (state.t >= 0) p.set('t', THEMES[state.t].key);
     if (state.fav) p.set('fav', '1');
     if (state.seed) p.set('mix', state.seed);
-    if (current >= 0) p.set('i', ITEMS[current].path.slice(9, -4));
+    if (current >= 0) p.set('i', ITEMS[current].key);
     const h = p.toString();
     history.replaceState(null, '', h ? '#' + h : location.pathname + location.search);
   }
   addEventListener('hashchange', () => {
     if (!DB) return;
-    const open = new URLSearchParams(location.hash.slice(1)).get('i');
-    if (!open) current = -1;
-    readHash(); update(); openFromHash();
+    const open = hashItem();
+    current = -1;
+    readHash(); update(); openFromHash(open);
   });
 
   // ---------- Filtrage ----------
@@ -96,7 +103,7 @@
 
   function update() {
     const toks = norm(state.q).split(/[^a-z0-9]+/).filter(Boolean);
-    const byColl = { '': 0, pro: 0, mc: 0 };
+    const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0 };
     const byTheme = new Uint32Array(THEMES.length);
     const out = [];
     const scores = new Float32Array(ITEMS.length);
@@ -119,13 +126,16 @@
       scores[it.i] = sc;
       out.push(it.i);
     }
-    const seed = state.seed || (!toks.length && state.t < 0 && !state.fav ? dailySeed() : 0);
+    const home = !toks.length && state.t < 0 && !state.fav;
+    const seed = state.seed || (home ? dailySeed() : 0);
     if (seed) shuffle(out, seed);
+    // À l'accueil, les 28 000 boutons et puces passent après les dessins et les photos
+    if (home && !state.seed && !state.c) out.sort((a, b) => (THEMES[ITEMS[a].t].c === 'web') - (THEMES[ITEMS[b].t].c === 'web'));
     else if (toks.length) out.sort((a, b) => scores[b] - scores[a] || a - b);
     results = out;
 
     const n = out.length;
-    $('#count').innerHTML = `${fmt(n)} <span>dessin${n > 1 ? 's' : ''}</span>`;
+    $('#count').innerHTML = `${fmt(n)} <span>image${n > 1 ? 's' : ''}</span>`;
     $('#empty').hidden = n > 0;
     renderColls(byColl);
     renderThemes(byTheme, toks.length > 0 || state.fav);
@@ -227,7 +237,7 @@
       const it = ITEMS[results[r]];
       const el = document.createElement('button');
       el.type = 'button';
-      el.className = 'tile' + (favs.has(it.path) ? ' fav' : '');
+      el.className = `tile k-${THEMES[it.t].c}` + (favs.has(it.path) ? ' fav' : '');
       el.dataset.r = r;
       const lbl = !it.name && state.t === it.t ? 'n° ' + it.f.replace(/^\D+/, '') : it.label;
       el.title = it.label;
@@ -276,29 +286,48 @@
   function openDetail(i) {
     current = i;
     const it = ITEMS[i], th = THEMES[it.t], coll = DB.collections.find((c) => c.id === th.c);
+    const raster = EXT[th.c] !== 'svg';
     $('#d-img').src = it.path;
     $('#d-img').alt = it.label;
+    $('#d-stage').className = `stage k-${th.c}`;
+    $('#d-img').style.width = '';
     $('#d-coll').textContent = `${coll.nom} · ${coll.annee}`;
     $('#d-title').textContent = it.name || th.nom;
     $('#d-meta').innerHTML = [
       `<button class="tag" type="button" data-act="coll" style="box-shadow:inset 6px 0 0 ${COLL_COLOR[th.c]}">${coll.nom}</button>`,
       `<button class="tag" type="button" data-act="theme">${esc(th.nom)}</button>`,
       it.perso ? `<button class="tag" type="button" data-act="perso">avec ${esc(it.perso)}</button>` : '',
-      `<span class="tag file">${it.f}.svg</span>`,
+      th.c === 'web' ? `<span class="tag file">forme ${it.f.slice(0, 4)} · couleur ${+it.f.slice(5)}</span>` : '',
+      `<span class="tag file" id="d-file">${it.f}.${EXT[th.c]}</span>`,
     ].join('');
     const dl = $('#d-svg');
     dl.href = it.path;
-    dl.download = fileBase(it) + '.svg';
+    dl.download = fileBase(it) + '.' + EXT[th.c];
+    dl.lastChild.textContent = EXT[th.c].toUpperCase();
+    $('.png').hidden = raster;
+    $('#d-copy').hidden = raster;
+    if (raster) {
+      const img = $('#d-img');
+      const dims = () => {
+        const f = $('#d-file');
+        if (f && img.naturalWidth) f.textContent = `${it.f}.${EXT[th.c]} · ${img.naturalWidth}×${img.naturalHeight} px`;
+        // Les images web sont minuscules : on les agrandit en pixels nets, sans dépasser la scène
+        img.style.width = th.c === 'web' ? Math.min(img.naturalWidth * 4, 440) + 'px' : '';
+      };
+      img.complete ? dims() : img.addEventListener('load', dims, { once: true });
+    }
     setFav(it);
     // Variantes (Cliparts Pro) ou voisins dans le thème (Micro Application)
     let rel, title;
     if (th.c === 'pro') { rel = VARIANTS.get(it.f.slice(0, 1) + it.f.slice(3)) || []; title = 'Toutes les variantes'; }
+    else if (th.c === 'web') { rel = VARIANTS.get(it.t + it.f.slice(0, 4)) || []; title = 'Toutes les couleurs'; }
     else {
       const list = BY_THEME[it.t], k = list.indexOf(i), s = Math.max(0, Math.min(list.length - 14, k - 7));
       rel = list.slice(s, s + 14); title = 'Dans le même thème';
     }
     $('#d-related-wrap').hidden = rel.length < 2;
     $('#d-related-title').textContent = title;
+    $('#d-related').className = `related-grid k-${th.c}`;
     $('#d-related').innerHTML = rel.map((j) => `<button type="button" data-i="${j}" aria-current="${j === i}" title="${esc(ITEMS[j].label)}"><img src="${ITEMS[j].path}" alt="${esc(ITEMS[j].label)}" loading="lazy"></button>`).join('');
     const r = results.indexOf(i);
     $('#d-prev').disabled = r <= 0;
