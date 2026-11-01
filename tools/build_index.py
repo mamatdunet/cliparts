@@ -1,4 +1,4 @@
-"""Construit data/index.json, l'index unique des sept collections, à partir des catalogues.
+"""Construit data/index.json, l'index unique des neuf collections, à partir des catalogues.
 Usage : python3 tools/build_index.py"""
 import json, os
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -9,6 +9,8 @@ web = json.load(open(os.path.join(root, 'cliparts/web/catalog.json')))
 szene = json.load(open(os.path.join(root, 'cliparts/szene/catalog.json')))
 imsi = json.load(open(os.path.join(root, 'cliparts/imsi/catalog.json')))
 anim = json.load(open(os.path.join(root, 'cliparts/anim/catalog.json')))
+mclips = json.load(open(os.path.join(root, 'cliparts/masterclips/catalog.json')))
+mphotos = json.load(open(os.path.join(root, 'cliparts/mphotos/catalog.json')))
 
 collections = [
     {'id': 'pro', 'nom': 'Cliparts Pro', 'annee': 1998, 'editeur': 'TLC Domus / Solver S.A.',
@@ -25,6 +27,10 @@ collections = [
      'source': 'https://archive.org/details/imsi-clipart-more-2.5-million-3-cd-rom', 'ext': 'svg'},
     {'id': 'anim', 'nom': 'Animations web', 'annee': 2003, 'editeur': 'IMSI, CD 2 de ClipArt & More',
      'source': 'https://archive.org/details/imsi-clipart-more-2.5-million-3-cd-rom', 'ext': 'gif'},
+    {'id': 'masterclips', 'nom': 'Masterclips', 'annee': 1996, 'editeur': 'IMSI',
+     'source': 'https://archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng', 'ext': 'svg'},
+    {'id': 'mphotos', 'nom': 'Photos Masterclips', 'annee': 1996, 'editeur': 'IMSI, CD 2 de Masterclips',
+     'source': 'https://archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng', 'ext': 'jpg'},
 ]
 themes, items = [], []
 tidx = {}
@@ -70,6 +76,17 @@ for k, nom in anim['themes']:
     themes.append([6, k, nom])
 for t, n, nom, kw in anim['items']:
     items.append([base + t, n, nom, 0, kw])
+# Masterclips (IMSI, 1996) : pas de nom par dessin, le thème sert de nom ; mots-clés = grande catégorie du CD
+base = len(themes)
+for k, nom in mclips['themes']:
+    themes.append([7, k, nom])
+for t, n, kw in mclips['items']:
+    items.append([base + t, n, 0, 0, kw])
+base = len(themes)
+for k, nom in mphotos['themes']:
+    themes.append([8, k, nom])
+for t, n, kw in mphotos['items']:
+    items.append([base + t, n])
 
 out = {'v': 1, 'collections': collections, 'persos': pro['persos'], 'themes': themes, 'items': items, 'adult': adult}
 os.makedirs(os.path.join(root, 'data'), exist_ok=True)

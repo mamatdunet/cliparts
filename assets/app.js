@@ -9,13 +9,13 @@
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* stockage indisponible */ } },
   };
-  const COLL_COLOR = { '': 'var(--green)', pro: 'var(--blue)', mc: 'var(--red)', photos: 'var(--yellow)', web: 'var(--neutral-500)', szene: 'var(--ink)', imsi: 'var(--green-700)', anim: 'var(--red-700)' };
+  const COLL_COLOR = { '': 'var(--green)', pro: 'var(--blue)', mc: 'var(--red)', photos: 'var(--yellow)', web: 'var(--neutral-500)', szene: 'var(--ink)', imsi: 'var(--green-700)', anim: 'var(--red-700)', masterclips: 'var(--blue-700)', mphotos: 'var(--neutral-600)' };
   // Mots-clés en plus pour les types d'images web (noms anglais du CD compris)
   const KW = { boutons: 'button', icones: 'icon', puces: 'bullet', fleches: 'arrow', traits: 'ligne separateur line' };
   // Animations web : un bouton existe en 25 couleurs (même animation, même fond), un objet ou un mot en 3 fonds
   const animKey = (t, f) => THEMES[t].slug.startsWith('bouton') ? t + f[1] + f.slice(-1) : t + f.slice(0, -1);
   const LAST = new Set(['web', 'anim']);
-  const COLL_IDS = ['pro', 'mc', 'photos', 'web', 'szene', 'imsi', 'anim'];
+  const COLL_IDS = ['pro', 'mc', 'photos', 'web', 'szene', 'imsi', 'anim', 'masterclips', 'mphotos'];
 
   let DB, ITEMS = [], THEMES = [], VARIANTS = new Map(), BY_THEME = [], EXT = {}, ADULT = new Set();
   let results = [];
@@ -109,7 +109,7 @@
 
   function update() {
     const toks = norm(state.q).split(/[^a-z0-9]+/).filter(Boolean);
-    const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0, szene: 0, imsi: 0, anim: 0 };
+    const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0, szene: 0, imsi: 0, anim: 0, masterclips: 0, mphotos: 0 };
     const byTheme = new Uint32Array(THEMES.length);
     const out = [];
     const scores = new Float32Array(ITEMS.length);
@@ -160,7 +160,7 @@
   // ---------- Barre latérale ----------
   function renderColls(counts) {
     const box = $('#colls');
-    const list = [{ id: '', nom: 'Toutes les collections', sub: '5 CD-ROM, 1998-2003' }, ...DB.collections.map((c) => ({ id: c.id, nom: c.nom, sub: `${c.editeur.split(' (')[0]}, ${c.annee}` }))];
+    const list = [{ id: '', nom: 'Toutes les collections', sub: '7 CD-ROM, 1996-2003' }, ...DB.collections.map((c) => ({ id: c.id, nom: c.nom, sub: `${c.editeur.split(' (')[0]}, ${c.annee}` }))];
     box.innerHTML = list.map((c) => `<button class="coll" role="radio" type="button" data-c="${c.id}" aria-checked="${state.c === c.id}">
       <span class="dot" style="background:${COLL_COLOR[c.id]}"></span><span>${c.nom}<small>${c.sub}</small></span><span class="n">${counts ? fmt(counts[c.id]) : ''}</span></button>`).join('');
   }

@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 TAG=$1; OUT=$(mktemp -d)
-for c in pro mc photos web szene imsi anim; do
+for c in pro mc photos web szene imsi anim masterclips mphotos; do
   COPYFILE_DISABLE=1 tar --no-xattrs --exclude .DS_Store -C cliparts -czf "$OUT/$c.tar.gz" "$c"
 done
 gh release create "$TAG" --repo mamatdunet/cliparts --title "Contenu : images des collections" \

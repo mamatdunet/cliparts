@@ -1,8 +1,8 @@
 # Cliparthèque
 
-Une bibliothèque web pour parcourir, rechercher et télécharger **122 845 images** issues de cinq
-CD-ROM de 1998 à 2003 : 47 662 cliparts vectoriels (convertis de WMF en SVG),
-3 010 photos, 28 250 images web, 41 579 animations GIF et 2 344 graphismes de la scène démo.
+Une bibliothèque web pour parcourir, rechercher et télécharger **156 796 images** issues de sept
+CD-ROM de 1996 à 2003 : 80 612 cliparts vectoriels (convertis de WMF en SVG),
+4 011 photos, 28 250 images web, 41 579 animations GIF et 2 344 graphismes de la scène démo.
 
 - **Cliparts Pro 12.000** (TLC Domus / Solver S.A., 1998) : 1 000 sujets nommés en français,
   en 12 000 dessins (chaque sujet seul ou avec l'un des 13 personnages récurrents).
@@ -21,12 +21,15 @@ CD-ROM de 1998 à 2003 : 47 662 cliparts vectoriels (convertis de WMF en SVG),
   Source : [archive.org/details/imsi-clipart-more-2.5-million-3-cd-rom](https://archive.org/details/imsi-clipart-more-2.5-million-3-cd-rom).
 - **Animations web** (IMSI, 2003), CD 2 du même coffret : 41 579 GIF animés en 3D (boutons en 4 animations
   et 25 couleurs, objets, mots de pages web), chacun sur fond noir, transparent et blanc. Le CD 3 (sons) n'est pas repris.
+- **Masterclips 35 000 Clip Arts** (IMSI, 1996), CD 1 : 32 950 dessins en 117 thèmes (sans nom sur le CD :
+  le thème sert de nom). Le CD 2 fournit **Photos Masterclips** : 1 001 photos BMP converties en JPG.
+  Source : [archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng](https://archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng).
 
 Ce que fait le site :
 
 - recherche instantanée sans accents ni majuscules (nom, thème, personnage, collection, mots-clés) ;
 - filtres par collection et par thème, avec le nombre de résultats ;
-- grille virtualisée : seules les vignettes visibles sont dans la page, même pour 122 000 images ;
+- grille virtualisée : seules les vignettes visibles sont dans la page, même pour 157 000 images ;
 - taille des vignettes réglable, fond blanc, damier ou sombre ;
 - fiche de chaque image : variantes, couleurs ou images voisines, téléchargement au format d'origine, export PNG des SVG
   de 512 à 4 096 px, copie du SVG, favoris (gardés dans le navigateur) ;
@@ -51,7 +54,7 @@ puis http://localhost:8765. Vercel lance ce même script à chaque déploiement 
 
 ```
 index.html, assets/        l'interface (HTML, CSS, JS sans dépendance)
-data/index.json            l'index unique des sept collections
+data/index.json            l'index unique des neuf collections
 cliparts/pro/<thème>/      Cliparts Pro : <thème>_<personnage>_<numéro>.svg + catalog.json
 cliparts/mc/<thème>/       Micro Application : <numéro>.svg + catalog.json
 cliparts/photos/<thème>/   Photos : <numéro>.jpg + catalog.json
@@ -59,6 +62,8 @@ cliparts/web/<type>/       Images web : <forme><type><couleur>.gif + catalog.jso
 cliparts/szene/<thème>/    Szene-Cliparts : <nom>.png + catalog.json
 cliparts/imsi/<thème>/     ClipArt & More : <numéro>.svg + catalog.json
 cliparts/anim/<thème>/     Animations web : <code><fond B/T/W>.gif + catalog.json
+cliparts/masterclips/<thème>/ Masterclips : <code>.svg + catalog.json
+cliparts/mphotos/<thème>/  Photos Masterclips : <code>.jpg + catalog.json
 tools/                     conversion WMF → SVG, construction de l'index, archives de contenu
 licences/                  licences d'origine des CD Cliparts Pro et Micro Application
 ```
@@ -78,6 +83,7 @@ python3 tools/build_extras.py <dossier où Photos/ et WebGen/ de 4366MC.iso sont
 python3 tools/build_szene.py <GRAPHICS extrait de Szene-Cliparts (2001).iso>   # nécessite Pillow
 python3 tools/build_imsi.py <CLIPART extrait de ClipaArt&More_2.5M_CD1_WIN.iso>
 python3 tools/build_anim.py <racine extraite de ClipaArt&More_2.5M_CD2_WIN.iso>
+python3 tools/build_masterclips.py <CLIPART du CD 1 Masterclips> <PHOTOS du CD 2 Masterclips>
 python3 tools/build_index.py
 bash tools/pack_content.sh contenu-v2   # publie les archives, puis mettre contenu-v2 dans fetch_content.sh
 ```
@@ -85,7 +91,8 @@ bash tools/pack_content.sh contenu-v2   # publie les archives, puis mettre conte
 Les dossiers `cliparts/<collection>/` ci-dessus n'existent qu'en local (ou dans `public/` après
 `fetch_content.sh`) : ils sont ignorés par git.
 
-`tools/wmf.py` est un convertisseur WMF minimal (polygones, polylignes, stylos et brosses).
+`tools/wmf.py` est un convertisseur WMF minimal (polygones, polylignes, rectangles, ellipses, arcs, textes,
+stylos et brosses).
 
 ## Licences d'origine
 
