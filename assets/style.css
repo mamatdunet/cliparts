@@ -110,7 +110,11 @@ button, input, select { font: inherit; color: inherit; }
 .side h2 { font-size: 20px; }
 .side-head { display: flex; align-items: center; justify-content: space-between; }
 .close-side { display: none; }
-.colls { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.colls {
+  display: flex; flex-direction: column; gap: 6px; margin: 0 -8px 12px -4px; padding: 2px 8px 4px 2px;
+  flex: 0 1 auto; min-height: 120px; max-height: 45%; overflow-y: auto; scrollbar-width: thin;
+}
+.colls .coll { flex: none; }
 .coll {
   display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
   padding: 8px 12px; border: var(--stroke) solid transparent; border-radius: var(--radius-sm);
@@ -126,7 +130,7 @@ button, input, select { font: inherit; color: inherit; }
   background: var(--surface-card); font-size: 14px;
 }
 .theme-filter:focus { border-color: var(--ink); outline: 0; }
-.themes { list-style: none; margin: 0 -8px 0 -4px; padding: 0 8px 24px 0; overflow-y: auto; flex: 1; scrollbar-width: thin; }
+.themes { list-style: none; margin: 0 -8px 0 -4px; padding: 0 8px 24px 0; overflow-y: auto; flex: 1 1 0; min-height: 160px; scrollbar-width: thin; }
 .themes button {
   display: flex; gap: 8px; width: 100%; padding: 5px 8px; border: 0; border-radius: 6px;
   background: none; text-align: left; font-size: 14px; cursor: pointer; line-height: 1.35;
