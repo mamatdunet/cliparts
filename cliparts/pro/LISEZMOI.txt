@@ -1,0 +1,13 @@
+Cliparts Pro 12.000 — TLC Domus (Amsterdam), dessins de Solver S.A. (Santiago, Chili, 1995-1996)
+Source : https://archive.org/details/cliparts-pro
+
+12 000 dessins convertis depuis les fichiers WMF du CD-ROM en SVG (tools/build.py) :
+  1 000 sujets × jusqu'à 14 variantes (dessin seul, ou avec un personnage récurrent).
+  Noms français : INDEX_3.TXT du CD. Catalogue : catalog.json.
+  Fichier : cliparts/<dossier>/<thème>_<personnage>_<numéro>.svg
+
+Licence d'origine (README.TXT du CD, résumé) :
+  reproduction libre de droits dans des publications imprimées ou numériques ;
+  interdit de revendre les images sous forme de collection de clip arts ou en tant que clip arts ;
+  interdit pour la diffusion TV, la publicité, le satellite et le câble ;
+  toute reproduction commerciale doit être signalée au préalable à Solver S.A.
