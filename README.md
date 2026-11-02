@@ -28,7 +28,8 @@ CD-ROM de 1996 à 2003 : 80 612 cliparts vectoriels (convertis de WMF en SVG),
 Ce que fait le site :
 
 - recherche instantanée sans accents ni majuscules (nom, thème, personnage, collection, mots-clés) ;
-- filtres par collection et par thème, avec le nombre de résultats ;
+- filtres par collection (liste repliable) et par thème, avec le nombre de résultats ; « Tout voir » ouvre tous les
+  thèmes en grand, avec une vignette chacun et l'aperçu du thème choisi dans une colonne ;
 - grille virtualisée : seules les vignettes visibles sont dans la page, même pour 157 000 images ;
 - taille des vignettes réglable, fond blanc, damier ou sombre ;
 - fiche de chaque image : variantes, couleurs ou images voisines, téléchargement au format d'origine, export PNG des SVG

@@ -217,6 +217,87 @@
   });
   $('#theme-filter').addEventListener('input', () => themeCounts && renderThemes(themeCounts, themeFiltered));
 
+  // Collections repliables : repliées, seule la collection choisie reste visible
+  function foldColls(open) {
+    $('#colls').classList.toggle('folded', !open);
+    $('#colls-toggle').setAttribute('aria-expanded', open);
+    store.set('collsOpen', open);
+  }
+  foldColls(store.get('collsOpen', true) !== false);
+  $('#colls-toggle').addEventListener('click', () => foldColls($('#colls-toggle').getAttribute('aria-expanded') !== 'true'));
+
+  // ---------- Tous les thèmes en grand, avec l'aperçu d'un thème dans une colonne ----------
+  const tv = $('#themes-dlg');
+  let tvColl = '', tvTheme = -1, tvShown = 0;
+  const themeItems = (t) => BY_THEME[t].filter(visible);
+  function renderTv() {
+    const f = norm($('#tv-filter').value.trim());
+    $('#tv-colls').innerHTML = [{ id: '', nom: 'Toutes' }, ...DB.collections].map((c) =>
+      `<button class="chip" role="radio" type="button" data-c="${c.id}" aria-checked="${tvColl === c.id}">${c.nom}</button>`).join('');
+    let html = '';
+    for (const c of DB.collections) {
+      if (tvColl && c.id !== tvColl) continue;
+      const list = THEMES.filter((th) => th.c === c.id && (!f || th.norm.includes(f))).map((th) => [th, themeItems(th.i)]).filter(([, l]) => l.length);
+      if (!list.length) continue;
+      html += `<section><h3><span class="dot" style="background:${COLL_COLOR[c.id]}"></span>${c.nom} <small>${list.length} thème${list.length > 1 ? 's' : ''}</small></h3><div class="tv-grid">`
+        + list.map(([th, l]) => `<button type="button" class="tv-card" data-t="${th.i}" aria-pressed="${tvTheme === th.i}">
+          <span class="th k-${c.id}"><img src="${ITEMS[l[Math.floor(l.length / 3)]].path}" alt="" loading="lazy"></span>
+          <strong>${esc(th.nom)}</strong><small>${fmt(l.length)} image${l.length > 1 ? 's' : ''}</small></button>`).join('') + '</div></section>';
+    }
+    $('#tv-body').innerHTML = html || '<p class="muted">Aucun thème.</p>';
+  }
+  function openPanel(t) {
+    const th = THEMES[t];
+    tvTheme = t; tvShown = 0;
+    for (const b of tv.querySelectorAll('.tv-card')) b.setAttribute('aria-pressed', +b.dataset.t === t);
+    $('#tp-coll').textContent = DB.collections.find((c) => c.id === th.c).nom;
+    $('#tp-title').textContent = th.nom;
+    const n = themeItems(t).length;
+    $('#tp-go').textContent = `Afficher ${n > 1 ? 'les ' + fmt(n) + ' images' : "l'image"} dans la grille`;
+    $('#tp-grid').className = `related-grid tp-grid k-${th.c}`;
+    $('#tp-grid').innerHTML = '';
+    morePanel();
+    $('#tv-panel').hidden = false;
+    $('#tv-panel').scrollTop = 0;
+  }
+  function morePanel() {
+    const l = themeItems(tvTheme), next = l.slice(tvShown, tvShown + 60);
+    tvShown += next.length;
+    $('#tp-grid').insertAdjacentHTML('beforeend', next.map((i) =>
+      `<button type="button" data-i="${i}" title="${esc(ITEMS[i].label)}"><img src="${ITEMS[i].path}" alt="${esc(ITEMS[i].label)}" loading="lazy"></button>`).join(''));
+    $('#tp-more').hidden = tvShown >= l.length;
+  }
+  function closePanel() {
+    tvTheme = -1;
+    $('#tv-panel').hidden = true;
+    for (const b of tv.querySelectorAll('.tv-card[aria-pressed="true"]')) b.setAttribute('aria-pressed', false);
+  }
+  $('#themes-all').addEventListener('click', () => {
+    tvColl = state.c; $('#tv-filter').value = $('#theme-filter').value;
+    renderTv(); tv.showModal(); $('#tv-body').scrollTop = 0;
+    $('#side').classList.remove('open');
+  });
+  $('#tv-filter').addEventListener('input', renderTv);
+  $('#tv-colls').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-c]'); if (!b) return;
+    tvColl = b.dataset.c; renderTv(); $('#tv-body').scrollTop = 0;
+  });
+  $('#tv-body').addEventListener('click', (e) => {
+    const b = e.target.closest('.tv-card'); if (!b) return;
+    +b.dataset.t === tvTheme ? closePanel() : openPanel(+b.dataset.t);
+  });
+  $('#tp-close').addEventListener('click', closePanel);
+  $('#tp-more').addEventListener('click', morePanel);
+  $('#tp-grid').addEventListener('click', (e) => { const b = e.target.closest('[data-i]'); if (b) openDetail(+b.dataset.i); });
+  $('#tp-go').addEventListener('click', () => {
+    Object.assign(state, { c: THEMES[tvTheme].c, t: tvTheme, q: '', fav: false, sel: '', seed: 0 });
+    $('#q').value = ''; $('#theme-filter').value = '';
+    tv.close(); update(); scrollTop();
+  });
+  // Échap ferme d'abord l'aperçu, puis la fenêtre
+  tv.addEventListener('cancel', (e) => { if (!$('#tv-panel').hidden) { e.preventDefault(); closePanel(); } });
+  tv.addEventListener('close', closePanel);
+
   function renderChips() {
     const chips = [];
     if (state.t >= 0) chips.push(['t', THEMES[state.t].nom]);

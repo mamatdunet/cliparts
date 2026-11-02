@@ -32,11 +32,18 @@
 <div class="layout">
   <aside class="side" id="side" aria-label="Filtres">
     <div class="side-head">
-      <h2>Collections</h2>
+      <button class="fold" id="colls-toggle" type="button" aria-expanded="true" aria-controls="colls">
+        <h2>Collections</h2><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
       <button class="btn icon close-side" id="close-side" type="button" aria-label="Fermer les filtres"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="colls" id="colls" role="radiogroup" aria-label="Collection"></div>
-    <h2>Thèmes</h2>
+    <div class="side-head">
+      <h2>Thèmes</h2>
+      <button class="btn small" id="themes-all" type="button" title="Voir tous les thèmes en grand">
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Tout voir
+      </button>
+    </div>
     <input class="theme-filter" id="theme-filter" type="search" placeholder="Filtrer les thèmes…" aria-label="Filtrer les thèmes">
     <ul class="themes" id="themes"></ul>
   </aside>
@@ -169,6 +176,27 @@
         <p class="small">1 001 photos en 384 px du CD 2 du même coffret (1996), rangées dans ses 28 dossiers : paysages, animaux, villes, cuisine, textures… converties de BMP 256 couleurs en JPG. Les polices, sons et vidéos du CD ne sont pas repris.</p>
       </section>
     </div>
+  </div>
+</dialog>
+
+<dialog class="sheet themes-dlg" id="themes-dlg" aria-labelledby="tv-title">
+  <div class="tv-head">
+    <h2 id="tv-title">Tous les thèmes</h2>
+    <input class="theme-filter" id="tv-filter" type="search" placeholder="Filtrer les thèmes…" aria-label="Filtrer les thèmes">
+    <button class="btn icon" type="button" data-close aria-label="Fermer" autofocus><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <div class="tv-colls" id="tv-colls" role="radiogroup" aria-label="Collection"></div>
+  </div>
+  <div class="tv-wrap">
+    <div class="tv-body" id="tv-body"></div>
+    <aside class="tv-panel" id="tv-panel" hidden aria-labelledby="tp-title">
+      <div class="tp-head">
+        <div><p class="eyebrow" id="tp-coll"></p><h3 id="tp-title"></h3></div>
+        <button class="btn icon" id="tp-close" type="button" aria-label="Fermer l'aperçu"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <button class="btn primary" id="tp-go" type="button"></button>
+      <div class="tp-grid" id="tp-grid"></div>
+      <button class="btn small" id="tp-more" type="button">Afficher plus</button>
+    </aside>
   </div>
 </dialog>
 
