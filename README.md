@@ -34,6 +34,26 @@ Ce que fait le site :
 - fiche de chaque image : variantes, couleurs ou images voisines, téléchargement au format d'origine, export PNG des SVG
   de 512 à 4 096 px, copie du SVG, favoris (gardés dans le navigateur) ;
 - adresse partageable : la recherche, les filtres et le dessin ouvert sont dans l'URL.
+- éditorial à l'accueil : une galerie du jour (fête ou saison du moment), des sélections thématiques
+  et un journal d'articles sur l'histoire du clip art.
+
+## Éditorial
+
+Tout est dans `data/editorial.json`, sans code à toucher :
+
+- **sélections** : `{id, titre, texte, regles}`. Une image entre dans la sélection si elle répond à l'une des
+  règles : `q` = recherche (tous les mots), `t` = thème `collection:dossier` (`*` final pour un préfixe), les deux
+  ensemble pour chercher dans un thème. Exemple : `{"q": "fall", "t": "masterclips:saisons"}`.
+- **galeries du jour** : une sélection avec `quand`, une liste de périodes `MM-JJ/MM-JJ`. La première dont une
+  période contient la date du jour s'affiche à l'accueil : mettre les fêtes avant les saisons. Pour une actualité,
+  ajouter en tête une période datée `2026-11-05/2026-11-08`. `paques`, `meres` et `peres` (fêtes des mères
+  et des pères) acceptent un décalage : `paques-47` = mardi gras.
+- **articles** : `{id, titre, date, chapo, image}` (image = `collection/dossier/fichier` d'une vignette), et le texte dans
+  `data/journal/<id>.html`. Dans le texte, `<div class="planche" data-items="clé clé…"></div>` affiche des images,
+  `<div class="planche" data-sel="id" data-n="8"></div>` un extrait de sélection, et
+  `<div class="video" data-yt="identifiant YouTube" data-titre="…"></div>` une vidéo chargée au clic.
+
+Adresses : `#sel=<id>` ouvre une sélection, `#a=<id>` un article, `#a=sommaire` la liste des articles.
 
 Interface aux couleurs du design system Amuseurs (Kalam et Karla, encre et papier, ombres « pop »).
 
@@ -55,6 +75,8 @@ puis http://localhost:8765. Vercel lance ce même script à chaque déploiement 
 ```
 index.html, assets/        l'interface (HTML, CSS, JS sans dépendance)
 data/index.json            l'index unique des neuf collections
+data/editorial.json        galeries du jour, sélections et liste des articles
+data/journal/              le texte des articles
 cliparts/pro/<thème>/      Cliparts Pro : <thème>_<personnage>_<numéro>.svg + catalog.json
 cliparts/mc/<thème>/       Micro Application : <numéro>.svg + catalog.json
 cliparts/photos/<thème>/   Photos : <numéro>.jpg + catalog.json

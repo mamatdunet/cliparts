@@ -1,0 +1,181 @@
+{
+  "_aide": "Galerie du jour, sélections et journal. Une sélection réunit les images qui répondent à l'une de ses règles : q = recherche (tous les mots), t = thème « collection:dossier » (un * final pour un préfixe), les deux ensemble pour chercher dans un thème. « quand » en fait une galerie du jour : la première dont une période contient la date du jour s'affiche à l'accueil. Une période est « MM-JJ/MM-JJ » ou « AAAA-MM-JJ/AAAA-MM-JJ » (pour l'actualité), et accepte paques, meres et peres (fête des mères et des pères) avec un décalage en jours : « paques-47 » = mardi gras.",
+  "selections": [
+    {
+      "id": "nouvel-an", "titre": "Bonne année !", "quand": ["12-26/01-06"],
+      "texte": "Coupes de champagne, cotillons et feux d'artifice : de quoi illustrer les vœux comme on les imprimait en 1998.",
+      "regles": [{ "q": "nouvel an" }, { "q": "champagne" }, { "q": "feu artifice" }, { "q": "new year" }]
+    },
+    {
+      "id": "saint-valentin", "titre": "Saint-Valentin", "quand": ["02-07/02-14"],
+      "texte": "Cœurs percés, cupidons et déclarations : les cartes d'amour faites maison avaient leur rayon dans chaque CD de cliparts.",
+      "regles": [{ "q": "saint-valentin" }, { "q": "valentine" }, { "q": "cupid" }]
+    },
+    {
+      "id": "carnaval", "titre": "Mardi gras et carnaval", "quand": ["paques-54/paques-47"],
+      "texte": "Masques, loups et déguisements pour le défilé de l'école ou le bal du comité des fêtes.",
+      "regles": [{ "q": "carnaval" }, { "q": "masque" }, { "q": "mask" }]
+    },
+    {
+      "id": "saint-patrick", "titre": "Saint-Patrick", "quand": ["03-14/03-17"],
+      "texte": "Trèfles, chapeaux verts et lutins : les CD américains ne manquaient jamais la fête irlandaise.",
+      "regles": [{ "q": "saint-patrick" }, { "q": "shamrock" }, { "q": "leprechaun" }]
+    },
+    {
+      "id": "poisson-d-avril", "titre": "Poisson d'avril", "quand": ["03-29/04-01"],
+      "texte": "Pour la farce du 1er avril, il fallait un poisson à découper et à accrocher dans un dos. En voici quelques centaines.",
+      "regles": [{ "q": "poisson d'avril" }, { "t": "imsi:poissons" }, { "t": "masterclips:*", "q": "fish" }, { "t": "pro:nature", "q": "poisson" }]
+    },
+    {
+      "id": "paques", "titre": "Joyeuses Pâques", "quand": ["paques-7/paques+1"],
+      "texte": "Œufs décorés, lapins et cloches : la chasse aux œufs commence ici.",
+      "regles": [{ "q": "paques" }, { "q": "easter" }, { "q": "lapin" }, { "q": "bunny" }]
+    },
+    {
+      "id": "fete-du-travail", "titre": "Fête du travail", "quand": ["04-28/05-01"],
+      "texte": "Le 1er mai, place aux métiers : boulangers, plombiers, médecins et secrétaires tels que les dessinaient les illustrateurs des années 90.",
+      "regles": [{ "q": "1er mai" }, { "t": "pro:metiers" }, { "t": "masterclips:metiers*" }, { "t": "imsi:ouvriers" }]
+    },
+    {
+      "id": "fete-des-meres", "titre": "Fête des mères", "quand": ["meres-6/meres"],
+      "texte": "Des fleurs, des cœurs et des mamans : de quoi décorer la carte à glisser sous la serviette.",
+      "regles": [{ "q": "fete des meres" }, { "q": "mother" }, { "q": "maman" }]
+    },
+    {
+      "id": "fete-des-peres", "titre": "Fête des pères", "quand": ["peres-6/peres"],
+      "texte": "Cravates, barbecues et bricolage : les clichés de la fête des pères, version clipart.",
+      "regles": [{ "q": "fete des peres" }, { "q": "father" }, { "q": "papa" }]
+    },
+    {
+      "id": "fete-de-la-musique", "titre": "Fête de la musique", "quand": ["06-15/06-21"],
+      "texte": "Guitares, saxophones et notes de musique pour l'affiche du concert du 21 juin.",
+      "regles": [{ "t": "imsi:musique" }, { "q": "guitar" }, { "q": "musique", "t": "pro:*" }, { "q": "music", "t": "mc:*" }]
+    },
+    {
+      "id": "14-juillet", "titre": "14 juillet", "quand": ["07-10/07-14"],
+      "texte": "Feux d'artifice, drapeaux et lampions : la fête nationale, avec les drapeaux du monde entier en prime.",
+      "regles": [{ "q": "14 juillet" }, { "q": "feu artifice" }, { "q": "fete nationale" }, { "t": "masterclips:drapeaux-du-monde" }]
+    },
+    {
+      "id": "vacances", "titre": "Les vacances", "quand": ["07-01/08-31"],
+      "texte": "Plages, parasols, valises et cartes postales : l'été comme dans un catalogue de voyages de 1998.",
+      "regles": [{ "q": "plage" }, { "q": "beach" }, { "q": "vacances" }, { "q": "ete vacances" }, { "t": "mphotos:cotes" }]
+    },
+    {
+      "id": "rentree", "titre": "La rentrée", "quand": ["09-01/09-12"],
+      "texte": "Cartables, crayons et tableaux noirs : tout ce qu'il faut pour la liste de fournitures et le journal de l'école.",
+      "regles": [{ "t": "masterclips:education" }, { "q": "school" }, { "q": "ecole" }, { "q": "pencil" }]
+    },
+    {
+      "id": "halloween", "titre": "Halloween", "quand": ["10-18/10-31"],
+      "texte": "Citrouilles, sorcières, chauves-souris et squelettes : la fête que les CD américains ont fait entrer dans les maisons françaises.",
+      "regles": [{ "q": "halloween" }, { "q": "pumpkin" }, { "q": "witch" }, { "q": "skeleton" }]
+    },
+    {
+      "id": "noel", "titre": "Noël", "quand": ["12-01/12-25"],
+      "texte": "Pères Noël, sapins, rennes et boules : le thème le mieux fourni de toutes les collections, avec plus de 500 dessins rien que chez Masterclips.",
+      "regles": [{ "t": "masterclips:noel" }, { "q": "noel" }, { "q": "christmas" }, { "q": "snowman" }]
+    },
+    {
+      "id": "printemps", "titre": "Le printemps", "quand": ["03-01/05-31"],
+      "texte": "Fleurs, oiseaux et jardins : le printemps des cliparts, entre bouquets vectoriels et photos de prairie.",
+      "regles": [{ "q": "printemps", "t": "masterclips:saisons" }, { "q": "printemps", "t": "pro:*" }, { "t": "masterclips:plantes-et-fleurs" }, { "t": "mphotos:plantes" }, { "q": "flower", "t": "imsi:*" }]
+    },
+    {
+      "id": "ete", "titre": "L'été", "quand": ["06-01/08-31"],
+      "texte": "Soleil, glaces et couchers de soleil : l'été en dessins et en photos.",
+      "regles": [{ "q": "ete vacances" }, { "q": "summer" }, { "t": "mphotos:couchers-de-soleil" }, { "t": "mphotos:cotes" }]
+    },
+    {
+      "id": "automne", "titre": "L'automne", "quand": ["09-01/11-30"],
+      "texte": "Feuilles mortes, champignons, écureuils et épouvantails : l'automne des CD-ROM, entre dessins vectoriels et photos d'arbres.",
+      "regles": [{ "q": "automne", "t": "pro:*" }, { "q": "automne", "t": "masterclips:saisons" }, { "q": "autumn" }, { "t": "mphotos:arbres-et-feuilles" }, { "q": "fall", "t": "masterclips:saisons" }, { "q": "leaf" }, { "q": "mushroom" }, { "q": "harvest" }, { "q": "squirrel" }, { "q": "scarecrow" }]
+    },
+    {
+      "id": "hiver", "titre": "L'hiver", "quand": ["12-01/02-29"],
+      "texte": "Bonshommes de neige, écharpes et luges : l'hiver en dessins.",
+      "regles": [{ "q": "hiver", "t": "masterclips:saisons" }, { "q": "hiver", "t": "pro:*" }, { "q": "hiver", "t": "mc:*" }, { "q": "winter" }, { "q": "snowman" }]
+    },
+
+    {
+      "id": "bureau-1996", "titre": "Le bureau de 1996",
+      "texte": "Écrans cathodiques, disquettes, fax et téléphones à fil : l'informatique de bureau telle qu'on la dessinait quand elle était encore une nouveauté.",
+      "regles": [{ "t": "imsi:types-d-ordinateurs" }, { "t": "imsi:materiel-informatique" }, { "t": "masterclips:informatique" }, { "q": "disquette" }, { "t": "masterclips:communication" }]
+    },
+    {
+      "id": "web-3d", "titre": "Le web en 3D de l'an 2000",
+      "texte": "Boutons qui tournent, mots qui rebondissent, globes et enveloppes animés : la panoplie des pages perso d'avant les réseaux sociaux.",
+      "regles": [{ "t": "anim:objets" }, { "t": "anim:mots-*" }, { "t": "web:icones" }]
+    },
+    {
+      "id": "scene-demo", "titre": "Les logos de la scène démo",
+      "texte": "Dessinés pixel par pixel sur Amiga et PC, les logos des groupes de la scène démo (Scoopex, Razor 1911, TRSI…) signaient les démos, les intros et les diskmags des années 90.",
+      "regles": [{ "t": "szene:logos" }]
+    },
+    {
+      "id": "famille-pro", "titre": "La troupe de Cliparts Pro",
+      "texte": "Monsieur, madame, l'ado, le gamin, le diablotin, le serpent ou le haricot : treize personnages récurrents qui rejouent les mêmes 1 000 situations.",
+      "regles": [{ "q": "diablotin" }, { "q": "haricot", "t": "pro:*" }, { "q": "farfelu" }, { "q": "fourmi", "t": "pro:*" }]
+    },
+    {
+      "id": "pop-art", "titre": "Pop art",
+      "texte": "Aplats francs, contours épais et créatures étranges : la veine la plus graphique de Masterclips.",
+      "regles": [{ "t": "masterclips:pop-art" }, { "t": "masterclips:creatures-pop-art" }]
+    },
+    {
+      "id": "cadres", "titre": "Cadres, coins et frises",
+      "texte": "Le secret des menus de mariage et des diplômes de kermesse : des milliers de bordures, d'angles et d'ornements à poser autour d'un texte.",
+      "regles": [{ "t": "masterclips:coins" }, { "t": "masterclips:bordures-*" }, { "t": "masterclips:frises" }, { "t": "imsi:bordures-et-bannieres" }, { "t": "masterclips:ornements" }]
+    },
+    {
+      "id": "panneaux", "titre": "Panneaux et pictogrammes",
+      "texte": "Attention chien méchant, sortie de secours, interdit de fumer : la signalétique prête à imprimer et à scotcher.",
+      "regles": [{ "t": "masterclips:panneaux-*" }, { "t": "masterclips:signalisation-routiere" }, { "t": "masterclips:securite" }]
+    },
+    {
+      "id": "animaux-droles", "titre": "Animaux à la sauce cartoon",
+      "texte": "Vaches à lunettes, chats en costume et chiens qui font du ski : le bestiaire humoristique des illustrateurs de clip art.",
+      "regles": [{ "t": "masterclips:animaux-humoristiques" }, { "t": "imsi:animaux-humanises" }]
+    },
+    {
+      "id": "fantasy-pixel", "titre": "Fantasy en pixels",
+      "texte": "Dragons, guerriers et paysages d'autres mondes, peints en 32 couleurs par les graphistes de la scène démo.",
+      "regles": [{ "t": "szene:fantasy" }, { "t": "szene:science-fiction" }, { "t": "szene:surrealisme" }]
+    },
+    {
+      "id": "disparus", "titre": "Dinosaures et espèces disparues",
+      "texte": "Tyrannosaures, mammouths et dodos, dessinés pour les exposés de sciences naturelles.",
+      "regles": [{ "t": "imsi:especes-disparues" }, { "t": "imsi:prehistoire" }]
+    }
+  ],
+  "articles": [
+      {
+          "id": "age-d-or-du-clipart",
+          "titre": "Pourquoi le clipart était partout",
+          "date": "2026-11-02",
+          "image": "imsi/types-d-ordinateurs/1825645",
+          "chapo": "Des recueils à découper de 1948 aux CD-ROM de 35 000 dessins, puis à la fermeture de la galerie Microsoft en 2014 : l'âge d'or du clip art, avec la vidéo de Linus Boman."
+      },
+      {
+          "id": "scene-demo",
+          "titre": "La scène démo, des logos peints pixel par pixel",
+          "date": "2026-11-02",
+          "image": "szene/logos/scoopex-acid-sco",
+          "chapo": "Mille logos de groupes dans les Szene-Cliparts : d'où vient cette culture des années 80, entrée en 2025 au patrimoine immatériel français."
+      },
+      {
+          "id": "web-de-l-an-2000",
+          "titre": "Le web en 3D de l'an 2000",
+          "date": "2026-11-02",
+          "image": "anim/objets/lezzcg0t",
+          "chapo": "Boutons qui tournent et GIF animés : l'esthétique des pages perso de GeoCities, devenue objet de musée."
+      },
+      {
+          "id": "archives",
+          "titre": "Qui sauve les cliparts ?",
+          "date": "2026-11-02",
+          "image": "masterclips/informatique/compu005",
+          "chapo": "Internet Archive, DiscMaster, Openclipart : où retrouver les images des CD-ROM disparus, et comment celles-ci ont été remises en état."
+      }
+  ]
+}

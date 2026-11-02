@@ -24,6 +24,7 @@
       <input id="q" type="search" placeholder="Chercher : chat, vélo, Noël…" autocomplete="off" spellcheck="false" aria-label="Rechercher">
       <kbd>/</kbd>
     </label>
+    <a class="btn ghost" id="journal-btn" href="#a=sommaire">Journal</a>
     <button class="btn ghost" id="about-btn" type="button">Crédits</button>
   </div>
 </header>
@@ -41,6 +42,8 @@
   </aside>
 
   <main class="main">
+    <div class="edito" id="edito" hidden></div>
+    <header class="sel-head" id="sel-head" hidden></header>
     <div class="bar">
       <button class="btn small show-side" id="show-side" type="button">
         <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>Filtres
@@ -166,6 +169,16 @@
         <p class="small">1 001 photos en 384 px du CD 2 du même coffret (1996), rangées dans ses 28 dossiers : paysages, animaux, villes, cuisine, textures… converties de BMP 256 couleurs en JPG. Les polices, sons et vidéos du CD ne sont pas repris.</p>
       </section>
     </div>
+  </div>
+</dialog>
+
+<dialog class="sheet article" id="article" aria-labelledby="art-title">
+  <div class="about-in">
+    <div class="info-head art-close">
+      <a class="btn small" href="#a=sommaire">Tous les articles</a>
+      <button class="btn icon" type="button" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <article id="art-body"></article>
   </div>
 </dialog>
 

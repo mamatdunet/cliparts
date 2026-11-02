@@ -1,5 +1,5 @@
-/* Cliparthèque — recherche et grille virtualisée sur data/index.json.
-   Index : themes = [collection, dossier, nom] ; items = [thème, fichier, nom?, personnage?]. */
+/* Cliparthèque — recherche et grille virtualisée sur data/index.json, éditorial sur data/editorial.json.
+   Index : themes = [collection, dossier, nom] ; items = [thème, fichier, nom?, personnage?, mots-clés?]. */
 (() => {
   'use strict';
   const $ = (s) => document.querySelector(s);
@@ -17,9 +17,10 @@
   const LAST = new Set(['web', 'anim']);
   const COLL_IDS = ['pro', 'mc', 'photos', 'web', 'szene', 'imsi', 'anim', 'masterclips', 'mphotos'];
 
-  let DB, ITEMS = [], THEMES = [], VARIANTS = new Map(), BY_THEME = [], EXT = {}, ADULT = new Set();
+  let DB, ITEMS = [], THEMES = [], VARIANTS = new Map(), BY_THEME = [], EXT = {}, ADULT = new Set(), BY_KEY = new Map();
+  let EDITO = { selections: [], articles: [] }, SEL = new Map(), ART = new Map();
   let results = [];
-  const state = { q: '', c: '', t: -1, fav: false, seed: 0, bg: store.get('bg', 'white'), size: store.get('size', 148), adult: store.get('adult', false) === true };
+  const state = { q: '', c: '', t: -1, fav: false, sel: '', a: '', seed: 0, bg: store.get('bg', 'white'), size: store.get('size', 148), adult: store.get('adult', false) === true };
   const favs = new Set(store.get('favs', []));
 
   const grid = $('#grid');
@@ -27,10 +28,16 @@
   let geo = { cols: 1, tw: 0, rowH: 1, lbl: 0 };
 
   // ---------- Données ----------
-  fetch('data/index.json').then((r) => r.json()).then(init).catch(() => { $('#count').textContent = "Impossible de charger l'index."; });
+  // L'éditorial (galerie du jour, sélections, journal) est facultatif : le site marche sans lui
+  const edito = fetch('data/editorial.json').then((r) => r.json()).catch(() => null);
+  fetch('data/index.json').then((r) => r.json()).then(async (db) => init(db, await edito))
+    .catch(() => { $('#count').textContent = "Impossible de charger l'index."; });
 
-  function init(db) {
+  function init(db, ed) {
     DB = db;
+    if (ed) EDITO = ed;
+    for (const s of EDITO.selections) SEL.set(s.id, s);
+    for (const a of EDITO.articles) ART.set(a.id, a);
     for (const c of db.collections) EXT[c.id] = c.ext;
     ADULT = new Set(db.adult || []);
     THEMES = db.themes.map(([c, slug, nom], i) => ({ i, c: db.collections[c].id, slug, nom, key: db.collections[c].id + ':' + slug, norm: norm(nom), total: 0 }));
@@ -47,10 +54,12 @@
       // Variantes : personnages (Cliparts Pro) ou couleurs d'une même forme (images web)
       const k = th.c === 'pro' ? f.slice(0, 1) + f.slice(3) : th.c === 'web' ? t + f.slice(0, 4) : th.c === 'anim' ? animKey(t, f) : '';
       if (k) {
+        it.vk = k;
         if (!VARIANTS.has(k)) VARIANTS.set(k, []);
         VARIANTS.get(k).push(i);
       }
       (BY_THEME[t] ||= []).push(i);
+      BY_KEY.set(key, i);
       return it;
     });
     const open = hashItem();
@@ -59,6 +68,7 @@
     renderColls();
     update();
     openFromHash(open);
+    syncArticle();
   }
   const hashItem = () => new URLSearchParams(location.hash.slice(1)).get('i');
   function openFromHash(open) {
@@ -74,6 +84,8 @@
     const th = THEMES.find((x) => x.key === p.get('t'));
     state.t = th ? th.i : -1;
     state.fav = p.get('fav') === '1';
+    state.sel = SEL.has(p.get('sel')) ? p.get('sel') : '';
+    state.a = ART.has(p.get('a')) || p.get('a') === 'sommaire' ? p.get('a') : '';
     state.seed = +p.get('mix') || 0;
     $('#q').value = state.q;
   }
@@ -83,6 +95,8 @@
     if (state.c) p.set('c', state.c);
     if (state.t >= 0) p.set('t', THEMES[state.t].key);
     if (state.fav) p.set('fav', '1');
+    if (state.sel) p.set('sel', state.sel);
+    if (state.a) p.set('a', state.a);
     if (state.seed) p.set('mix', state.seed);
     if (current >= 0) p.set('i', ITEMS[current].key);
     const h = p.toString();
@@ -92,7 +106,9 @@
     if (!DB) return;
     const open = hashItem();
     current = -1;
-    readHash(); update(); openFromHash(open);
+    const sel = state.sel;
+    readHash(); update(); openFromHash(open); syncArticle();
+    if (state.sel !== sel) scrollTop();
   });
 
   // ---------- Filtrage ----------
@@ -113,8 +129,10 @@
     const byTheme = new Uint32Array(THEMES.length);
     const out = [];
     const scores = new Float32Array(ITEMS.length);
+    const sel = state.sel ? selSet(state.sel) : null;
     for (const it of ITEMS) {
       if (state.fav && !favs.has(it.path)) continue;
+      if (sel && !sel.has(it.i)) continue;
       if (!visible(it.i)) continue;
       let ok = true, sc = 0;
       for (const tk of toks) {
@@ -133,8 +151,8 @@
       scores[it.i] = sc;
       out.push(it.i);
     }
-    const home = !toks.length && state.t < 0 && !state.fav;
-    const seed = state.seed || (home ? dailySeed() : 0);
+    const home = !toks.length && state.t < 0 && !state.fav && !state.sel;
+    const seed = state.seed || (home || state.sel ? dailySeed() : 0);
     if (seed) shuffle(out, seed);
     // À l'accueil, les 28 000 boutons et puces passent après les dessins et les photos
     if (home && !state.seed && !state.c) out.sort((a, b) => LAST.has(THEMES[ITEMS[a].t].c) - LAST.has(THEMES[ITEMS[b].t].c));
@@ -147,6 +165,7 @@
     renderColls(byColl);
     renderThemes(byTheme, toks.length > 0 || state.fav);
     renderChips();
+    renderEdito(home && !state.c);
     $('#fav-only').setAttribute('aria-pressed', state.fav);
     $('#shuffle').classList.toggle('toggle', true);
     $('#shuffle').setAttribute('aria-pressed', !!state.seed);
@@ -201,13 +220,14 @@
   function renderChips() {
     const chips = [];
     if (state.t >= 0) chips.push(['t', THEMES[state.t].nom]);
+    if (state.sel) chips.push(['sel', SEL.get(state.sel).titre]);
     if (state.fav) chips.push(['fav', 'Favoris']);
     if (state.seed) chips.push(['mix', 'Mélangé']);
     $('#active').innerHTML = chips.map(([k, l]) => `<button class="chip" type="button" data-k="${k}" aria-label="Retirer le filtre ${l}">${l}<svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>`).join('');
   }
   $('#active').addEventListener('click', (e) => {
     const b = e.target.closest('.chip'); if (!b) return;
-    ({ t: () => (state.t = -1), fav: () => (state.fav = false), mix: () => (state.seed = 0) })[b.dataset.k]();
+    ({ t: () => (state.t = -1), sel: () => (state.sel = ''), fav: () => (state.fav = false), mix: () => (state.seed = 0) })[b.dataset.k]();
     update();
   });
 
@@ -267,11 +287,11 @@
   let deb = 0;
   $('#q').addEventListener('input', (e) => {
     clearTimeout(deb);
-    deb = setTimeout(() => { state.q = e.target.value.trim(); state.seed = 0; update(); scrollTop(); }, 90);
+    deb = setTimeout(() => { state.q = e.target.value.trim(); state.seed = 0; state.sel = ''; update(); scrollTop(); }, 90);
   });
   $('#fav-only').addEventListener('click', () => { state.fav = !state.fav; update(); scrollTop(); });
   $('#shuffle').addEventListener('click', () => { state.seed = 1 + Math.floor(Math.random() * 1e6); update(); scrollTop(); });
-  $('#reset').addEventListener('click', () => { Object.assign(state, { q: '', c: '', t: -1, fav: false, seed: 0 }); $('#q').value = ''; $('#theme-filter').value = ''; update(); });
+  $('#reset').addEventListener('click', () => { Object.assign(state, { q: '', c: '', t: -1, fav: false, sel: '', seed: 0 }); $('#q').value = ''; $('#theme-filter').value = ''; update(); });
   $('#size').addEventListener('input', (e) => { state.size = +e.target.value; store.set('size', state.size); layout(); });
   $('#bg').addEventListener('click', (e) => { const b = e.target.closest('[data-bg]'); if (b) { state.bg = b.dataset.bg; store.set('bg', state.bg); applyPrefs(); } });
   $('#show-side').addEventListener('click', () => $('#side').classList.add('open'));
@@ -378,9 +398,9 @@
     if (b.dataset.act === 'coll') { state.c = th.c; state.t = -1; }
     if (b.dataset.act === 'theme') { state.c = th.c; state.t = th.i; state.q = ''; }
     if (b.dataset.act === 'perso') { state.q = it.perso; state.c = 'pro'; state.t = -1; }
-    state.seed = 0;
+    state.seed = 0; state.sel = '';
     $('#q').value = state.q;
-    dlg.close(); update(); scrollTop();
+    dlg.close(); art.close(); update(); scrollTop();
   });
   $('#d-fav').addEventListener('click', () => {
     const it = ITEMS[current];
@@ -421,6 +441,146 @@
       }, 'image/png');
     } catch { toast("L'export PNG a échoué"); }
   });
+
+  // ---------- Éditorial : galerie du jour, sélections, journal (data/editorial.json) ----------
+  // Une sélection réunit les images qui répondent à l'une de ses règles : q = recherche, t = thème (* final = préfixe)
+  const selCache = new Map();
+  function selSet(id) {
+    if (selCache.has(id)) return selCache.get(id);
+    const rules = SEL.get(id).regles.map((r) => ({
+      toks: r.q ? norm(r.q).split(/[^a-z0-9]+/).filter(Boolean) : [],
+      t: !r.t ? null : r.t.endsWith('*') ? (k) => k.startsWith(r.t.slice(0, -1)) : (k) => k === r.t,
+    }));
+    const set = new Set();
+    for (const it of ITEMS) {
+      if (rules.some((r) => (!r.t || r.t(THEMES[it.t].key)) && r.toks.every((tk) => it.hay.includes(tk)))) set.add(it.i);
+    }
+    selCache.set(id, set);
+    return set;
+  }
+  const selCount = (id) => { let n = 0; for (const i of selSet(id)) if (visible(i)) n++; return n; };
+  // n images d'une sélection, différentes chaque jour, une seule par groupe de variantes (couleurs, personnages, fonds)
+  function pick(id, n) {
+    const seen = new Set(), out = [];
+    for (const i of shuffle([...selSet(id)].filter(visible), dailySeed() + id.length)) {
+      const vk = ITEMS[i].vk;
+      if (vk && seen.has(vk)) continue;
+      if (vk) seen.add(vk);
+      out.push(i);
+      if (out.length === n) break;
+    }
+    return out;
+  }
+  const thumb = (i, href) => {
+    const it = ITEMS[i];
+    return `<a class="th k-${THEMES[it.t].c}" href="${href}&i=${encodeURIComponent(it.key)}" title="${esc(it.label)}"><img src="${it.path}" alt="${esc(it.label)}" loading="lazy"></a>`;
+  };
+
+  // Périodes des galeries du jour : « MM-JJ/MM-JJ », « AAAA-MM-JJ/… », ou paques, meres, peres avec un décalage en jours
+  function easter(y) {
+    const a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451), x = h + l - 7 * m + 114;
+    return new Date(y, Math.floor(x / 31) - 1, (x % 31) + 1);
+  }
+  // Fête des mères : dernier dimanche de mai, une semaine plus tard si c'est la Pentecôte ; fête des pères : 3e dimanche de juin
+  function mothers(y) {
+    const d = new Date(y, 5, 0), p = easter(y);
+    d.setDate(d.getDate() - d.getDay()); p.setDate(p.getDate() + 49);
+    if (+d === +p) d.setDate(d.getDate() + 7);
+    return d;
+  }
+  function fathers(y) { const d = new Date(y, 5, 1); d.setDate(1 + ((7 - d.getDay()) % 7) + 14); return d; }
+  function day(tok, y) {
+    const m = tok.trim().match(/^(?:(paques|meres|peres)|(?:(\d{4})-)?(\d\d)-(\d\d))([+-]\d+)?$/);
+    if (!m) return null;
+    const d = m[1] ? { paques: easter, meres: mothers, peres: fathers }[m[1]](y) : new Date(m[2] ? +m[2] : y, +m[3] - 1, +m[4]);
+    if (m[5]) d.setDate(d.getDate() + +m[5]);
+    return d;
+  }
+  function inPeriod(p, now) {
+    const y = now.getFullYear(), today = new Date(y, now.getMonth(), now.getDate());
+    const [s, e] = p.split('/').map((x) => day(x, y));
+    if (!s || !e) return false;
+    return s <= e ? today >= s && today <= e : today >= s || today <= e; // à cheval sur deux années
+  }
+  const todaySel = () => EDITO.selections.find((s) => s.quand && s.quand.some((p) => inPeriod(p, new Date())));
+
+  let editoKey = '';
+  function renderEdito(show) {
+    const sel = state.sel && SEL.get(state.sel);
+    $('#sel-head').hidden = !sel;
+    if (sel) {
+      $('#sel-head').innerHTML = `<p class="eyebrow">${sel === todaySel() ? "Galerie du jour" : sel.quand ? 'Au fil de l’année' : 'Sélection'}</p>
+        <h1>${esc(sel.titre)}</h1><p>${esc(sel.texte)}</p>`;
+    }
+    const box = $('#edito');
+    box.hidden = !show || !EDITO.selections.length;
+    if (box.hidden || editoKey === dailySeed() + ':' + state.adult) return;
+    editoKey = dailySeed() + ':' + state.adult;
+    const today = todaySel();
+    const date = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+    let html = '';
+    if (today) {
+      html += `<section class="today" aria-labelledby="today-h">
+        <div class="today-txt"><p class="eyebrow">Aujourd'hui, ${date}</p><h2 id="today-h">${esc(today.titre)}</h2><p>${esc(today.texte)}</p>
+        <a class="btn primary" href="#sel=${today.id}">Voir les ${fmt(selCount(today.id))} images</a></div>
+        <div class="today-pics">${pick(today.id, 8).map((i) => thumb(i, '#sel=' + today.id)).join('')}</div></section>`;
+    }
+    const fetes = EDITO.selections.filter((s) => s.quand && s !== today);
+    html += `<div class="fetes"><span class="eyebrow">Au fil de l'année</span>${fetes.map((s) => `<a class="chip" href="#sel=${s.id}">${esc(s.titre)}</a>`).join('')}</div>`;
+    html += `<h2 class="edito-h">Sélections</h2><div class="cards">${EDITO.selections.filter((s) => !s.quand).map((s) =>
+      `<a class="card" href="#sel=${s.id}"><span class="mosaic">${pick(s.id, 4).map((i) => `<img class="k-${THEMES[ITEMS[i].t].c}" src="${ITEMS[i].path}" alt="" loading="lazy">`).join('')}</span>
+        <strong>${esc(s.titre)}</strong><small>${fmt(selCount(s.id))} images</small></a>`).join('')}</div>`;
+    if (EDITO.articles.length) {
+      html += `<h2 class="edito-h">Journal</h2><div class="cards arts">${EDITO.articles.map((a) => artCard(a)).join('')}</div>`;
+    }
+    box.innerHTML = html + '<h2 class="edito-h">Toutes les images</h2>';
+  }
+  function artCard(a) {
+    const it = ITEMS[BY_KEY.get(a.image)];
+    return `<a class="card art" href="#a=${a.id}"><span class="cover${it ? ' k-' + THEMES[it.t].c : ''}">${it ? `<img src="${it.path}" alt="" loading="lazy">` : ''}</span>
+      <strong>${esc(a.titre)}</strong><small>${esc(a.chapo)}</small></a>`;
+  }
+
+  // Articles : fragments HTML de data/journal/<id>.html, ouverts dans une fenêtre
+  const art = $('#article');
+  async function syncArticle() {
+    if (!state.a) { if (art.open) art.close(); return; }
+    if (art.dataset.id !== state.a) { art.dataset.id = state.a; await fillArticle(state.a); }
+    if (!art.open) { art.showModal(); art.scrollTop = 0; }
+  }
+  async function fillArticle(id) {
+    const body = $('#art-body');
+    if (id === 'sommaire') {
+      body.innerHTML = `<p class="eyebrow">Journal</p><h2 id="art-title">Histoires de cliparts</h2>
+        <p class="chapo">D'où viennent ces images, qui les a dessinées, et ce qu'elles sont devenues.</p>
+        <div class="cards arts">${EDITO.articles.map(artCard).join('')}</div>`;
+      return;
+    }
+    const a = ART.get(id);
+    body.innerHTML = '<p class="muted">Chargement…</p>';
+    try {
+      const r = await fetch(`data/journal/${id}.html`);
+      if (!r.ok) throw new Error(r.status);
+      const when = new Date(a.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+      body.innerHTML = `<p class="eyebrow">Journal · ${when}</p><h2 id="art-title">${esc(a.titre)}</h2><p class="chapo">${esc(a.chapo)}</p>${await r.text()}`;
+    } catch { body.innerHTML = '<p>Article introuvable.</p>'; return; }
+    for (const el of body.querySelectorAll('.planche')) {
+      const ids = el.dataset.sel ? pick(el.dataset.sel, +el.dataset.n || 8) : el.dataset.items.split(/\s+/).map((k) => BY_KEY.get(k)).filter((i) => i != null && visible(i));
+      el.innerHTML = ids.map((i) => thumb(i, '#a=' + id)).join('') + (el.dataset.sel ? `<a class="more" href="#sel=${el.dataset.sel}">Toute la sélection →</a>` : '');
+    }
+    // Vidéos : vignette d'abord, le lecteur YouTube (sans cookie) ne se charge qu'au clic
+    for (const v of body.querySelectorAll('.video[data-yt]')) {
+      v.innerHTML = `<button type="button" aria-label="Lire la vidéo ${esc(v.dataset.titre || '')}"><img src="https://i.ytimg.com/vi/${v.dataset.yt}/hqdefault.jpg" alt="" loading="lazy"><span class="play" aria-hidden="true"></span></button>`;
+      v.querySelector('button').addEventListener('click', () => {
+        v.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.dataset.yt}?autoplay=1" title="${esc(v.dataset.titre || 'Vidéo')}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+      });
+    }
+  }
+  art.addEventListener('close', () => { if (state.a) { state.a = ''; writeHash(); } });
+  // Les liens #sel=… d'un article ferment la fenêtre (le hashchange s'en charge) ; on remonte en haut de la grille
+  art.addEventListener('click', (e) => { if (e.target.closest('a[href^="#sel="]')) art.close(); });
 
   let tt = 0;
   function toast(msg) {

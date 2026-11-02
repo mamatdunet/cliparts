@@ -76,12 +76,26 @@ for k, nom in anim['themes']:
     themes.append([6, k, nom])
 for t, n, nom, kw in anim['items']:
     items.append([base + t, n, nom, 0, kw])
-# Masterclips (IMSI, 1996) : pas de nom par dessin, le thème sert de nom ; mots-clés = grande catégorie du CD
+# Masterclips (IMSI, 1996) : pas de nom par dessin, le thème sert de nom ; mots-clés = grande catégorie du CD,
+# plus l'occasion que code le début du fichier dans les thèmes de fêtes et de saisons (hallw001 = Halloween…)
+MCLIPS_KW = {
+    'hallw': 'halloween citrouille', 'thkgv': 'thanksgiving', 'colum': 'christophe colomb', 'labor': 'fete du travail labor day',
+    'vetdy': 'armistice anciens combattants', 'oktbr': 'oktoberfest biere', 'valen': 'saint-valentin amour coeur',
+    'newyr': 'nouvel an reveillon bonne annee', 'presd': 'presidents', 'hanak': 'hanoucca', 'mking': 'martin luther king',
+    'ghog': 'jour de la marmotte', 'boxdy': 'boxing day', 'eastr': 'paques oeuf lapin', 'stpat': 'saint-patrick trefle',
+    'aprl': "poisson d'avril", 'carn': 'carnaval', 'mardi': 'mardi gras carnaval', 'secdy': 'journee des secretaires',
+    'july': '4 juillet fete nationale', 'memor': 'memorial day', 'mothr': 'fete des meres maman', 'fathr': 'fete des peres papa',
+    'flgdy': 'jour du drapeau', 'maydy': '1er mai', 'arbor': "jour de l'arbre", 'bastl': '14 juillet fete nationale',
+    'cinco': 'cinco de mayo', 'wintr': 'hiver neige', 'summr': 'ete vacances', 'sprng': 'printemps', 'fall': 'automne',
+    'bday': 'anniversaire', 'wedng': 'mariage', 'grad': 'diplome', 'anniv': 'anniversaire de mariage',
+    'baby': 'naissance bebe', 'funrl': 'obseques deuil', 'spcoc': 'occasion speciale',
+}
 base = len(themes)
 for k, nom in mclips['themes']:
     themes.append([7, k, nom])
 for t, n, kw in mclips['items']:
-    items.append([base + t, n, 0, 0, kw])
+    extra = MCLIPS_KW.get(n.rstrip('0123456789'), '')
+    items.append([base + t, n, 0, 0, (kw + ' ' + extra).strip()])
 base = len(themes)
 for k, nom in mphotos['themes']:
     themes.append([8, k, nom])
