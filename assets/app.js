@@ -683,15 +683,23 @@
         <a class="btn primary" href="#sel=${today.id}">Voir les ${fmt(selCount(today.id))} images</a></div>
         <div class="today-pics">${pick(today.id, 8).map((i) => thumb(i, '#sel=' + today.id)).join('')}</div></section>`;
     }
+    // Le journal, à côté de la galerie du jour, pour donner le contexte dès l'arrivée
+    if (EDITO.articles.length) {
+      html += `<aside class="une-journal" aria-labelledby="journal-h"><h2 id="journal-h" class="eyebrow">Le journal</h2>
+        ${EDITO.articles.map((a) => artRow(a)).join('')}<a class="more" href="#a=sommaire">Tout le journal →</a></aside>`;
+    }
+    if (html) html = `<div class="une${today ? '' : ' seul'}">${html}</div>`;
     const fetes = EDITO.selections.filter((s) => s.quand && s !== today);
     html += `<div class="fetes"><span class="eyebrow">Au fil de l'année</span>${fetes.map((s) => `<a class="chip" href="#sel=${s.id}">${esc(s.titre)}</a>`).join('')}</div>`;
     html += `<h2 class="edito-h">Sélections</h2><div class="cards">${EDITO.selections.filter((s) => !s.quand).map((s) =>
       `<a class="card" href="#sel=${s.id}"><span class="mosaic">${pick(s.id, 4).map((i) => `<img class="k-${THEMES[ITEMS[i].t].c}" src="${ITEMS[i].path}" alt="" loading="lazy">`).join('')}</span>
         <strong>${esc(s.titre)}</strong><small>${fmt(selCount(s.id))} images</small></a>`).join('')}</div>`;
-    if (EDITO.articles.length) {
-      html += `<h2 class="edito-h">Journal</h2><div class="cards arts">${EDITO.articles.map((a) => artCard(a)).join('')}</div>`;
-    }
     box.innerHTML = html + '<h2 class="edito-h">Toutes les images</h2>';
+  }
+  function artRow(a) {
+    const it = ITEMS[BY_KEY.get(a.image)];
+    return `<a class="art-row" href="#a=${a.id}"><span class="cover${it ? ' k-' + THEMES[it.t].c : ''}">${it ? `<img src="${it.path}" alt="" loading="lazy">` : ''}</span>
+      <span><strong>${esc(a.titre)}</strong><small>${esc(a.chapo)}</small></span></a>`;
   }
   function artCard(a) {
     const it = ITEMS[BY_KEY.get(a.image)];
