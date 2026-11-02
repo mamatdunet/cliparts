@@ -113,6 +113,14 @@ python3 tools/build_index.py
 bash tools/pack_content.sh contenu-v2   # publie les archives, puis mettre contenu-v2 dans fetch_content.sh
 ```
 
+**Openclipart** (en préparation) : `python3 tools/build_openclipart.py` importe les ~185 000 dessins du domaine public
+d'[openclipart.org](https://openclipart.org/) dans `cliparts/openclipart/<rubrique>/<id>.svg`. La liste vient du sitemap ;
+la page de chaque dessin donne ses tags (qui choisissent la rubrique), son auteur et l'indication « Safe for Work? »
+(sinon réservé à l'option +18 ans). Les SVG sont nettoyés : scripts, liens externes et données d'Inkscape ou
+d'Illustrator retirés, nombres arrondis. 8 téléchargements à la fois (`--parallele`), environ 9 heures ; le script
+ralentit puis s'arrête si le site refuse les requêtes, et reprend où il s'est arrêté (`--max N` pour un essai, `--catalogue` pour reclasser sans réseau). `build_index.py` ajoute la
+collection dès que `cliparts/openclipart/catalog.json` existe.
+
 `build_index.py` écarte les images dont le fichier est identique à une autre (1 026, surtout des dessins IMSI repris
 par Micro Application) ; le dossier de chaque copie écartée devient un mot-clé de l'image gardée.
 

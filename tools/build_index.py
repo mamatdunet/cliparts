@@ -12,6 +12,9 @@ imsi = json.load(open(os.path.join(root, 'cliparts/imsi/catalog.json')))
 anim = json.load(open(os.path.join(root, 'cliparts/anim/catalog.json')))
 mclips = json.load(open(os.path.join(root, 'cliparts/masterclips/catalog.json')))
 mphotos = json.load(open(os.path.join(root, 'cliparts/mphotos/catalog.json')))
+# Openclipart n'entre dans l'index qu'une fois importé (tools/build_openclipart.py)
+ocp = os.path.join(root, 'cliparts/openclipart/catalog.json')
+oclip = json.load(open(ocp)) if os.path.exists(ocp) else None
 
 collections = [
     {'id': 'pro', 'nom': 'Cliparts Pro', 'annee': 1998, 'editeur': 'TLC Domus / Solver S.A.',
@@ -33,6 +36,9 @@ collections = [
     {'id': 'mphotos', 'nom': 'Photos Masterclips', 'annee': 1996, 'editeur': 'IMSI, CD 2 de Masterclips',
      'source': 'https://archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng', 'ext': 'jpg'},
 ]
+if oclip:
+    collections.append({'id': 'openclipart', 'nom': 'Openclipart', 'annee': 2004, 'editeur': 'Openclipart, domaine public (CC0)',
+                        'source': 'https://openclipart.org/', 'ext': 'svg'})
 themes, items = [], []
 tidx = {}
 for t, th in sorted(pro['themes'].items(), key=lambda kv: kv[1]['nom']):
@@ -102,6 +108,16 @@ for k, nom in mphotos['themes']:
     themes.append([8, k, nom])
 for t, n, kw in mphotos['items']:
     items.append([base + t, n])
+# Openclipart : titre anglais de l'auteur ; mots-clés = tags (et leur traduction) et auteur ; « +18 » si la page
+# du dessin le dit « Safe for Work? No »
+if oclip:
+    base = len(themes)
+    for k, nom in oclip['themes']:
+        themes.append([9, k, nom])
+    for it in oclip['items']:
+        if len(it) > 5:
+            adult.append(len(items))
+        items.append([base + it[0], it[1], it[2], 0, it[3]])
 
 # Doublons : une image dont le fichier est identique à une autre n'apparaît qu'une fois. On garde de préférence
 # la version ClipArt & More (nommée, avec mots-clés) plutôt que sa reprise par Micro Application ; le nom du dossier

@@ -126,6 +126,8 @@ _rx = [(re.compile(p), SLUGS.index(r)) for p, r in REGLES]
 
 def rubrique(coll, dossier, nom):
     """Indice de la rubrique d'un dossier, ou None s'il n'est pas classé."""
+    if coll == 'openclipart':  # dessins déjà rangés par rubrique (tools/build_openclipart.py)
+        return SLUGS.index(dossier)
     key = f'{coll}:{norm(nom)}'
     for rx, i in _rx:
         if rx.search(key) or rx.search(f'{coll}:{dossier}'):
