@@ -17,10 +17,11 @@
   const LAST = new Set(['web', 'anim']);
   const COLL_IDS = ['pro', 'mc', 'photos', 'web', 'szene', 'imsi', 'anim', 'masterclips', 'mphotos'];
 
-  let DB, ITEMS = [], THEMES = [], VARIANTS = new Map(), BY_THEME = [], EXT = {}, ADULT = new Set(), BY_KEY = new Map();
+  // RUBS = thèmes généraux affichés ; THEMES = dossiers des CD (chaque dossier appartient à une rubrique)
+  let DB, ITEMS = [], THEMES = [], RUBS = [], VARIANTS = new Map(), BY_THEME = [], BY_RUB = [], EXT = {}, ADULT = new Set(), BY_KEY = new Map();
   let EDITO = { selections: [], articles: [] }, SEL = new Map(), ART = new Map();
   let results = [];
-  const state = { q: '', c: '', t: -1, fav: false, sel: '', a: '', seed: 0, bg: store.get('bg', 'white'), size: store.get('size', 148), adult: store.get('adult', false) === true };
+  const state = { q: '', c: '', t: -1, d: -1, fav: false, sel: '', a: '', seed: 0, photos: store.get('photos', true) !== false, bg: store.get('bg', 'white'), size: store.get('size', 148), adult: store.get('adult', false) === true };
   const favs = new Set(store.get('favs', []));
 
   const grid = $('#grid');
@@ -40,7 +41,8 @@
     for (const a of EDITO.articles) ART.set(a.id, a);
     for (const c of db.collections) EXT[c.id] = c.ext;
     ADULT = new Set(db.adult || []);
-    THEMES = db.themes.map(([c, slug, nom], i) => ({ i, c: db.collections[c].id, slug, nom, key: db.collections[c].id + ':' + slug, norm: norm(nom), total: 0 }));
+    RUBS = db.rubriques.map(([slug, nom], i) => ({ i, slug, nom, norm: norm(nom) }));
+    THEMES = db.themes.map(([c, slug, nom, r], i) => ({ i, c: db.collections[c].id, slug, nom, r, key: db.collections[c].id + ':' + slug, norm: norm(nom), total: 0 }));
     ITEMS = db.items.map(([t, f, nom, v, kw], i) => {
       const th = THEMES[t];
       th.total++;
@@ -50,7 +52,7 @@
       const key = `${th.c}/${th.slug}/${f}`;
       const it = { i, t, f, name, perso, label, key, path: `cliparts/${key}.${EXT[th.c]}` };
       it.nname = norm(name);
-      it.hay = norm([name, perso, th.nom, db.collections[db.themes[t][0]].nom, KW[th.slug] || '', kw || '', f].join(' '));
+      it.hay = norm([name, perso, th.nom, RUBS[th.r].nom, db.collections[db.themes[t][0]].nom, KW[th.slug] || '', kw || '', f].join(' '));
       // Variantes : personnages (Cliparts Pro) ou couleurs d'une même forme (images web)
       const k = th.c === 'pro' ? f.slice(0, 1) + f.slice(3) : th.c === 'web' ? t + f.slice(0, 4) : th.c === 'anim' ? animKey(t, f) : '';
       if (k) {
@@ -59,6 +61,7 @@
         VARIANTS.get(k).push(i);
       }
       (BY_THEME[t] ||= []).push(i);
+      (BY_RUB[th.r] ||= []).push(i);
       BY_KEY.set(key, i);
       return it;
     });
@@ -81,8 +84,11 @@
     const p = new URLSearchParams(location.hash.slice(1));
     state.q = p.get('q') || '';
     state.c = COLL_IDS.includes(p.get('c')) ? p.get('c') : '';
-    const th = THEMES.find((x) => x.key === p.get('t'));
-    state.t = th ? th.i : -1;
+    // t = rubrique ; d = dossier d'un CD (les anciennes adresses t=collection:dossier deviennent d)
+    const t = p.get('t') || '', d = p.get('d') || (t.includes(':') ? t : '');
+    const rub = RUBS.find((x) => x.slug === t), th = THEMES.find((x) => x.key === d);
+    state.t = rub ? rub.i : -1;
+    state.d = th ? th.i : -1;
     state.fav = p.get('fav') === '1';
     state.sel = SEL.has(p.get('sel')) ? p.get('sel') : '';
     state.a = ART.has(p.get('a')) || p.get('a') === 'sommaire' ? p.get('a') : '';
@@ -93,7 +99,8 @@
     const p = new URLSearchParams();
     if (state.q) p.set('q', state.q);
     if (state.c) p.set('c', state.c);
-    if (state.t >= 0) p.set('t', THEMES[state.t].key);
+    if (state.t >= 0) p.set('t', RUBS[state.t].slug);
+    if (state.d >= 0) p.set('d', THEMES[state.d].key);
     if (state.fav) p.set('fav', '1');
     if (state.sel) p.set('sel', state.sel);
     if (state.a) p.set('a', state.a);
@@ -113,7 +120,9 @@
 
   // ---------- Filtrage ----------
   // Les images marquées +18 ans n'apparaissent nulle part tant que l'option n'est pas activée
-  const visible = (i) => state.adult || !ADULT.has(i);
+  // Les photos peuvent être masquées (bouton Photos), sauf quand on parcourt une collection de photos
+  const PHOTO = new Set(['photos', 'mphotos']);
+  const visible = (i) => (state.adult || !ADULT.has(i)) && (state.photos || PHOTO.has(state.c) || !PHOTO.has(THEMES[ITEMS[i].t].c));
   function rng(seed) {
     return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
   }
@@ -126,7 +135,7 @@
   function update() {
     const toks = norm(state.q).split(/[^a-z0-9]+/).filter(Boolean);
     const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0, szene: 0, imsi: 0, anim: 0, masterclips: 0, mphotos: 0 };
-    const byTheme = new Uint32Array(THEMES.length);
+    const byTheme = new Uint32Array(RUBS.length);
     const out = [];
     const scores = new Float32Array(ITEMS.length);
     const sel = state.sel ? selSet(state.sel) : null;
@@ -146,12 +155,13 @@
       const th = THEMES[it.t];
       byColl['']++; byColl[th.c]++;
       if (state.c && th.c !== state.c) continue;
-      byTheme[it.t]++;
-      if (state.t >= 0 && it.t !== state.t) continue;
+      if (state.d >= 0 && it.t !== state.d) continue;
+      byTheme[th.r]++;
+      if (state.t >= 0 && th.r !== state.t) continue;
       scores[it.i] = sc;
       out.push(it.i);
     }
-    const home = !toks.length && state.t < 0 && !state.fav && !state.sel;
+    const home = !toks.length && state.t < 0 && state.d < 0 && !state.fav && !state.sel;
     const seed = state.seed || (home || state.sel ? dailySeed() : 0);
     if (seed) shuffle(out, seed);
     // À l'accueil, les 28 000 boutons et puces passent après les dessins et les photos
@@ -167,6 +177,7 @@
     renderChips();
     renderEdito(home && !state.c);
     $('#fav-only').setAttribute('aria-pressed', state.fav);
+    $('#photos-btn').setAttribute('aria-pressed', state.photos);
     $('#shuffle').classList.toggle('toggle', true);
     $('#shuffle').setAttribute('aria-pressed', !!state.seed);
     writeHash();
@@ -186,7 +197,7 @@
   $('#colls').addEventListener('click', (e) => {
     const b = e.target.closest('.coll'); if (!b) return;
     state.c = b.dataset.c;
-    if (state.t >= 0 && state.c && THEMES[state.t].c !== state.c) state.t = -1;
+    if (state.d >= 0 && state.c && THEMES[state.d].c !== state.c) state.d = -1;
     update(); scrollTop();
   });
 
@@ -194,17 +205,12 @@
   function renderThemes(counts, filtered) {
     themeCounts = counts; themeFiltered = filtered;
     const f = norm($('#theme-filter').value.trim());
-    let html = '', last = '';
-    for (const th of THEMES) {
-      if (state.c && th.c !== state.c) continue;
-      const n = counts[th.i];
-      if (!n && th.i !== state.t) continue;
-      if (f && !th.norm.includes(f)) continue;
-      if (!state.c && th.c !== last) {
-        last = th.c;
-        html += `<li class="grp">${DB.collections.find((c) => c.id === th.c).nom}</li>`;
-      }
-      html += `<li><button type="button" data-t="${th.i}" aria-pressed="${state.t === th.i}"><span>${th.nom}</span><span class="n">${fmt(n)}</span></button></li>`;
+    let html = '';
+    for (const r of RUBS) {
+      const n = counts[r.i];
+      if (!n && r.i !== state.t) continue;
+      if (f && !r.norm.includes(f)) continue;
+      html += `<li><button type="button" data-t="${r.i}" aria-pressed="${state.t === r.i}"><span>${r.nom}</span><span class="n">${fmt(n)}</span></button></li>`;
     }
     $('#themes').innerHTML = html || '<li class="grp">Aucun thème</li>';
   }
@@ -212,6 +218,7 @@
     const b = e.target.closest('button[data-t]'); if (!b) return;
     const t = +b.dataset.t;
     state.t = state.t === t ? -1 : t;
+    state.d = -1;
     update(); scrollTop();
     $('#side').classList.remove('open');
   });
@@ -229,42 +236,45 @@
   // ---------- Tous les thèmes en grand, avec l'aperçu d'un thème dans une colonne ----------
   const tv = $('#themes-dlg');
   let tvColl = '', tvTheme = -1, tvShown = 0;
-  const themeItems = (t) => BY_THEME[t].filter(visible);
+  // Images d'une rubrique dans la collection choisie en haut de la fenêtre
+  const rubItems = (r) => (BY_RUB[r] || []).filter((i) => visible(i) && (!tvColl || THEMES[ITEMS[i].t].c === tvColl));
   function renderTv() {
     const f = norm($('#tv-filter').value.trim());
-    $('#tv-colls').innerHTML = [{ id: '', nom: 'Toutes' }, ...DB.collections].map((c) =>
+    $('#tv-colls').innerHTML = [{ id: '', nom: 'Toutes les collections' }, ...DB.collections].map((c) =>
       `<button class="chip" role="radio" type="button" data-c="${c.id}" aria-checked="${tvColl === c.id}">${c.nom}</button>`).join('');
-    let html = '';
-    for (const c of DB.collections) {
-      if (tvColl && c.id !== tvColl) continue;
-      const list = THEMES.filter((th) => th.c === c.id && (!f || th.norm.includes(f))).map((th) => [th, themeItems(th.i)]).filter(([, l]) => l.length);
-      if (!list.length) continue;
-      html += `<section><h3><span class="dot" style="background:${COLL_COLOR[c.id]}"></span>${c.nom} <small>${list.length} thème${list.length > 1 ? 's' : ''}</small></h3><div class="tv-grid">`
-        + list.map(([th, l]) => `<button type="button" class="tv-card" data-t="${th.i}" aria-pressed="${tvTheme === th.i}">
-          <span class="th k-${c.id}"><img src="${ITEMS[l[Math.floor(l.length / 3)]].path}" alt="" loading="lazy"></span>
-          <strong>${esc(th.nom)}</strong><small>${fmt(l.length)} image${l.length > 1 ? 's' : ''}</small></button>`).join('') + '</div></section>';
-    }
-    $('#tv-body').innerHTML = html || '<p class="muted">Aucun thème.</p>';
+    const cards = RUBS.filter((r) => !f || r.norm.includes(f)).map((r) => [r, rubItems(r.i)]).filter(([, l]) => l.length);
+    $('#tv-body').innerHTML = cards.length ? '<div class="tv-grid">' + cards.map(([r, l]) => {
+      // Vignette : de préférence un dessin, pris au même endroit de la liste chaque jour
+      const pool = l.filter((i) => EXT[THEMES[ITEMS[i].t].c] === 'svg'), src = pool.length ? pool : l;
+      const it = ITEMS[src[(dailySeed() + r.i * 7919) % src.length]];
+      return `<button type="button" class="tv-card" data-t="${r.i}" aria-pressed="${tvTheme === r.i}">
+        <span class="th k-${THEMES[it.t].c}"><img src="${it.path}" alt="" loading="lazy"></span>
+        <strong>${esc(r.nom)}</strong><small>${fmt(l.length)} image${l.length > 1 ? 's' : ''}</small></button>`;
+    }).join('') + '</div>' : '<p class="muted">Aucun thème.</p>';
   }
-  function openPanel(t) {
-    const th = THEMES[t];
-    tvTheme = t; tvShown = 0;
-    for (const b of tv.querySelectorAll('.tv-card')) b.setAttribute('aria-pressed', +b.dataset.t === t);
-    $('#tp-coll').textContent = DB.collections.find((c) => c.id === th.c).nom;
-    $('#tp-title').textContent = th.nom;
-    const n = themeItems(t).length;
-    $('#tp-go').textContent = `Afficher ${n > 1 ? 'les ' + fmt(n) + ' images' : "l'image"} dans la grille`;
-    $('#tp-grid').className = `related-grid tp-grid k-${th.c}`;
+  function openPanel(r) {
+    tvTheme = r; tvShown = 0;
+    for (const b of tv.querySelectorAll('.tv-card')) b.setAttribute('aria-pressed', +b.dataset.t === r);
+    const l = rubItems(r);
+    $('#tp-coll').textContent = tvColl ? DB.collections.find((c) => c.id === tvColl).nom : 'Toutes les collections';
+    $('#tp-title').textContent = RUBS[r].nom;
+    $('#tp-go').textContent = `Afficher ${l.length > 1 ? 'les ' + fmt(l.length) + ' images' : "l'image"} dans la grille`;
+    // Les dossiers des CD qui composent la rubrique, pour aller plus finement
+    const folders = new Map();
+    for (const i of l) folders.set(ITEMS[i].t, (folders.get(ITEMS[i].t) || 0) + 1);
+    $('#tp-folders').innerHTML = folders.size > 1 ? `<span class="eyebrow">Dossiers des CD</span>` + [...folders].sort((a, b) => b[1] - a[1]).map(([t, n]) =>
+      `<button class="chip" type="button" data-d="${t}" title="${DB.collections.find((c) => c.id === THEMES[t].c).nom}">${esc(THEMES[t].nom)} <small>${fmt(n)}</small></button>`).join('') : '';
+    $('#tp-grid').className = 'related-grid tp-grid';
     $('#tp-grid').innerHTML = '';
     morePanel();
     $('#tv-panel').hidden = false;
     $('#tv-panel').scrollTop = 0;
   }
   function morePanel() {
-    const l = themeItems(tvTheme), next = l.slice(tvShown, tvShown + 60);
+    const l = rubItems(tvTheme), next = l.slice(tvShown, tvShown + 60);
     tvShown += next.length;
     $('#tp-grid').insertAdjacentHTML('beforeend', next.map((i) =>
-      `<button type="button" data-i="${i}" title="${esc(ITEMS[i].label)}"><img src="${ITEMS[i].path}" alt="${esc(ITEMS[i].label)}" loading="lazy"></button>`).join(''));
+      `<button type="button" class="k-${THEMES[ITEMS[i].t].c}" data-i="${i}" title="${esc(ITEMS[i].label)}"><img src="${ITEMS[i].path}" alt="${esc(ITEMS[i].label)}" loading="lazy"></button>`).join(''));
     $('#tp-more').hidden = tvShown >= l.length;
   }
   function closePanel() {
@@ -289,8 +299,15 @@
   $('#tp-close').addEventListener('click', closePanel);
   $('#tp-more').addEventListener('click', morePanel);
   $('#tp-grid').addEventListener('click', (e) => { const b = e.target.closest('[data-i]'); if (b) openDetail(+b.dataset.i); });
+  $('#tp-folders').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-d]'); if (!b) return;
+    const t = +b.dataset.d;
+    Object.assign(state, { c: THEMES[t].c, t: -1, d: t, q: '', fav: false, sel: '', seed: 0 });
+    $('#q').value = ''; $('#theme-filter').value = '';
+    tv.close(); update(); scrollTop();
+  });
   $('#tp-go').addEventListener('click', () => {
-    Object.assign(state, { c: THEMES[tvTheme].c, t: tvTheme, q: '', fav: false, sel: '', seed: 0 });
+    Object.assign(state, { c: tvColl, t: tvTheme, d: -1, q: '', fav: false, sel: '', seed: 0 });
     $('#q').value = ''; $('#theme-filter').value = '';
     tv.close(); update(); scrollTop();
   });
@@ -300,7 +317,8 @@
 
   function renderChips() {
     const chips = [];
-    if (state.t >= 0) chips.push(['t', THEMES[state.t].nom]);
+    if (state.t >= 0) chips.push(['t', RUBS[state.t].nom]);
+    if (state.d >= 0) chips.push(['d', 'Dossier : ' + THEMES[state.d].nom]);
     if (state.sel) chips.push(['sel', SEL.get(state.sel).titre]);
     if (state.fav) chips.push(['fav', 'Favoris']);
     if (state.seed) chips.push(['mix', 'Mélangé']);
@@ -308,7 +326,7 @@
   }
   $('#active').addEventListener('click', (e) => {
     const b = e.target.closest('.chip'); if (!b) return;
-    ({ t: () => (state.t = -1), sel: () => (state.sel = ''), fav: () => (state.fav = false), mix: () => (state.seed = 0) })[b.dataset.k]();
+    ({ t: () => (state.t = -1), d: () => (state.d = -1), sel: () => (state.sel = ''), fav: () => (state.fav = false), mix: () => (state.seed = 0) })[b.dataset.k]();
     update();
   });
 
@@ -347,7 +365,7 @@
       el.type = 'button';
       el.className = `tile k-${THEMES[it.t].c}` + (favs.has(it.path) ? ' fav' : '');
       el.dataset.r = r;
-      const lbl = !it.name && state.t === it.t ? 'n° ' + it.f.replace(/^\D+/, '') : it.label;
+      const lbl = !it.name && state.d === it.t ? 'n° ' + it.f.replace(/^\D+/, '') : it.label;
       el.title = it.label;
       el.innerHTML = `<span class="pic"><img src="${it.path}" alt="" loading="lazy" decoding="async"></span><span class="lbl">${esc(lbl)}</span>`;
       el.setAttribute('aria-label', it.label);
@@ -371,8 +389,14 @@
     deb = setTimeout(() => { state.q = e.target.value.trim(); state.seed = 0; state.sel = ''; update(); scrollTop(); }, 90);
   });
   $('#fav-only').addEventListener('click', () => { state.fav = !state.fav; update(); scrollTop(); });
+  $('#photos-btn').addEventListener('click', () => {
+    state.photos = !state.photos; store.set('photos', state.photos);
+    editoKey = ''; update();
+    if (tv.open) { renderTv(); if (tvTheme >= 0) openPanel(tvTheme); }
+    toast(state.photos ? 'Photos affichées' : 'Photos masquées');
+  });
   $('#shuffle').addEventListener('click', () => { state.seed = 1 + Math.floor(Math.random() * 1e6); update(); scrollTop(); });
-  $('#reset').addEventListener('click', () => { Object.assign(state, { q: '', c: '', t: -1, fav: false, sel: '', seed: 0 }); $('#q').value = ''; $('#theme-filter').value = ''; update(); });
+  $('#reset').addEventListener('click', () => { Object.assign(state, { q: '', c: '', t: -1, d: -1, fav: false, sel: '', seed: 0 }); $('#q').value = ''; $('#theme-filter').value = ''; update(); });
   $('#size').addEventListener('input', (e) => { state.size = +e.target.value; store.set('size', state.size); layout(); });
   $('#bg').addEventListener('click', (e) => { const b = e.target.closest('[data-bg]'); if (b) { state.bg = b.dataset.bg; store.set('bg', state.bg); applyPrefs(); } });
   $('#show-side').addEventListener('click', () => $('#side').classList.add('open'));
@@ -381,7 +405,7 @@
   $('#adult').addEventListener('change', (e) => {
     state.adult = e.target.checked;
     store.set('adult', state.adult);
-    if (state.t >= 0 && !BY_THEME[state.t].some(visible)) state.t = -1;
+    if (state.d >= 0 && !BY_THEME[state.d].some(visible)) state.d = -1;
     update();
   });
   function applyPrefs() {
@@ -393,7 +417,7 @@
   addEventListener('keydown', (e) => {
     if (e.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName) && !document.querySelector('dialog[open]')) { e.preventDefault(); $('#q').focus(); }
     if (dlg.open && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && document.activeElement.tagName !== 'SELECT') { e.preventDefault(); step(e.key === 'ArrowLeft' ? -1 : 1); }
-    if (dlg.open && (e.key === 'r' || e.key === 'R') && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { rot = (rot + (e.key === 'R' ? 270 : 90)) % 360; applyRot(); }
+    if (dlg.open && (e.key === 'r' || e.key === 'R') && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { rot = (rot + (e.key === 'R' ? 270 : 90)) % 360; $('#d-rot-box').open = true; applyRot(); }
   });
 
   // ---------- Fiche détaillée ----------
@@ -413,7 +437,8 @@
     $('#d-title').textContent = it.name || th.nom;
     $('#d-meta').innerHTML = [
       `<button class="tag" type="button" data-act="coll" style="box-shadow:inset 6px 0 0 ${COLL_COLOR[th.c]}">${coll.nom}</button>`,
-      `<button class="tag" type="button" data-act="theme">${esc(th.nom)}</button>`,
+      `<button class="tag" type="button" data-act="theme">${esc(RUBS[th.r].nom)}</button>`,
+      th.nom !== RUBS[th.r].nom ? `<button class="tag sub" type="button" data-act="folder" title="Dossier du CD">${esc(th.nom)}</button>` : '',
       it.perso ? `<button class="tag" type="button" data-act="perso">avec ${esc(it.perso)}</button>` : '',
       th.c === 'web' ? `<span class="tag file">forme ${it.f.slice(0, 4)} · couleur ${+it.f.slice(5)}</span>` : '',
       `<span class="tag file" id="d-file">${it.f}.${EXT[th.c]}</span>`,
@@ -435,6 +460,7 @@
       img.complete ? dims() : img.addEventListener('load', dims, { once: true });
     }
     applyRot();
+    if (!rot) $('#d-rot-box').open = false;
     setFav(it);
     // Variantes (Cliparts Pro) ou voisins dans le thème (Micro Application)
     let rel, title;
@@ -443,7 +469,7 @@
     else if (th.c === 'anim') { rel = VARIANTS.get(animKey(it.t, it.f)) || []; title = THEMES[it.t].slug.startsWith('bouton') ? 'Toutes les couleurs' : 'Tous les fonds'; }
     else {
       const list = BY_THEME[it.t], k = list.indexOf(i), s = Math.max(0, Math.min(list.length - 14, k - 7));
-      rel = list.slice(s, s + 14); title = 'Dans le même thème';
+      rel = list.slice(s, s + 14); title = 'Dans le même dossier';
     }
     rel = rel.filter(visible);
     $('#d-related-wrap').hidden = rel.length < 2;
@@ -529,9 +555,10 @@
   $('#d-meta').addEventListener('click', (e) => {
     const b = e.target.closest('[data-act]'); if (!b) return;
     const it = ITEMS[current], th = THEMES[it.t];
-    if (b.dataset.act === 'coll') { state.c = th.c; state.t = -1; }
-    if (b.dataset.act === 'theme') { state.c = th.c; state.t = th.i; state.q = ''; }
-    if (b.dataset.act === 'perso') { state.q = it.perso; state.c = 'pro'; state.t = -1; }
+    if (b.dataset.act === 'coll') { state.c = th.c; state.t = -1; state.d = -1; }
+    if (b.dataset.act === 'theme') { state.t = th.r; state.d = -1; state.q = ''; }
+    if (b.dataset.act === 'folder') { state.c = th.c; state.t = -1; state.d = th.i; state.q = ''; }
+    if (b.dataset.act === 'perso') { state.q = it.perso; state.c = 'pro'; state.t = -1; state.d = -1; }
     state.seed = 0; state.sel = '';
     $('#q').value = state.q;
     dlg.close(); art.close(); update(); scrollTop();
@@ -644,8 +671,9 @@
     }
     const box = $('#edito');
     box.hidden = !show || !EDITO.selections.length;
-    if (box.hidden || editoKey === dailySeed() + ':' + state.adult) return;
-    editoKey = dailySeed() + ':' + state.adult;
+    const key = dailySeed() + ':' + state.adult + ':' + state.photos;
+    if (box.hidden || editoKey === key) return;
+    editoKey = key;
     const today = todaySel();
     const date = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
     let html = '';

@@ -1,6 +1,7 @@
 """Construit data/index.json, l'index unique des neuf collections, à partir des catalogues.
 Usage : python3 tools/build_index.py"""
-import json, os
+import json, os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 pro = json.load(open(os.path.join(root, 'cliparts/pro/catalog.json')))
 mc = json.load(open(os.path.join(root, 'cliparts/mc/catalog.json')))
@@ -102,7 +103,15 @@ for k, nom in mphotos['themes']:
 for t, n, kw in mphotos['items']:
     items.append([base + t, n])
 
-out = {'v': 1, 'collections': collections, 'persos': pro['persos'], 'themes': themes, 'items': items, 'adult': adult}
+# Rubriques : les 964 dossiers des CD regroupés en une cinquantaine de thèmes généraux (tools/rubriques.py) ;
+# themes[i] = [collection, dossier, nom du dossier, rubrique]
+from rubriques import RUBRIQUES, rubrique
+for th in themes:
+    r = rubrique(collections[th[0]]['id'], th[1], th[2])
+    assert r is not None, th
+    th.append(r)
+out = {'v': 2, 'collections': collections, 'persos': pro['persos'], 'rubriques': [list(r) for r in RUBRIQUES],
+       'themes': themes, 'items': items, 'adult': adult}
 os.makedirs(os.path.join(root, 'data'), exist_ok=True)
 json.dump(out, open(os.path.join(root, 'data/index.json'), 'w'), ensure_ascii=False, separators=(',', ':'))
 print(len(items), 'items', len(themes), 'themes')

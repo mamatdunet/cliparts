@@ -453,9 +453,24 @@ body[data-bg="dark"] .tile .pic, body[data-bg="dark"] .stage, body[data-bg="dark
 }
 
 /* Rotation dans la fiche */
-.rotate { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.rotate summary { cursor: pointer; font-size: 13px; color: var(--text-muted); width: max-content; }
+.rotate summary:hover { color: var(--ink); }
+.rotate-in { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin-top: 8px; }
 .seg.rot button { width: auto; padding: 0 11px; background: var(--surface-card); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .seg.rot button[aria-pressed="true"] { background: var(--yellow); }
 .seg.rot button:hover { background: var(--yellow-100); }
 .seg.rot button[aria-pressed="true"]:hover { background: var(--yellow); }
 #d-img { transition: transform var(--dur-med) var(--ease-out); }
+
+/* Bouton Photos (enfoncé = photos affichées) et dossiers d'une rubrique */
+.btn.toggle-on[aria-pressed="false"] { background: var(--neutral-100); color: var(--text-muted); border-style: dashed; }
+.btn.toggle-on[aria-pressed="false"] .ic { opacity: .5; }
+.tag.sub { font-weight: 500; border-style: dashed; }
+.tp-folders { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tp-folders .eyebrow { width: 100%; }
+.tp-folders .chip { padding: 0 10px; background: var(--surface-card); font-weight: 500; }
+.tp-folders .chip small { color: var(--text-muted); margin-left: 2px; }
+.tp-grid button.k-photos, .tp-grid button.k-mphotos { padding: 0; overflow: hidden; }
+.tp-grid button.k-photos img, .tp-grid button.k-mphotos img { object-fit: cover; }
+.tp-grid button.k-web img, .tp-grid button.k-anim img, .tp-grid button.k-szene img { image-rendering: pixelated; }
+@media (max-width: 520px) { #photos-btn span { display: none; } #photos-btn { width: 34px; padding: 0; } }

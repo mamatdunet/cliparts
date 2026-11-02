@@ -28,7 +28,9 @@ CD-ROM de 1996 à 2003 : 80 612 cliparts vectoriels (convertis de WMF en SVG),
 Ce que fait le site :
 
 - recherche instantanée sans accents ni majuscules (nom, thème, personnage, collection, mots-clés) ;
-- filtres par collection (liste repliable) et par thème, avec le nombre de résultats ; « Tout voir » ouvre tous les
+- filtres par collection (liste repliable) et par thème, avec le nombre de résultats. Les 964 dossiers des CD sont
+  regroupés en 57 thèmes généraux (`tools/rubriques.py`) ; le nom du dossier reste un mot-clé de recherche et un filtre
+  depuis la fiche d'une image ; un bouton masque ou affiche les photos ; « Tout voir » ouvre tous les
   thèmes en grand, avec une vignette chacun et l'aperçu du thème choisi dans une colonne ;
 - grille virtualisée : seules les vignettes visibles sont dans la page, même pour 157 000 images ;
 - taille des vignettes réglable, fond blanc, damier ou sombre ;
@@ -91,7 +93,7 @@ tools/                     conversion WMF → SVG, construction de l'index, arch
 licences/                  licences d'origine des CD Cliparts Pro et Micro Application
 ```
 
-`data/index.json` : `themes` = `[collection, dossier, nom]`, `items` = `[thème, fichier, nom?, personnage?, mots-clés?]`,
+`data/index.json` : `rubriques` = `[slug, nom]`, `themes` = `[collection, dossier, nom, rubrique]`, `items` = `[thème, fichier, nom?, personnage?, mots-clés?]`,
 `adult` = indices des images réservées à l'option +18 ans.
 
 ## Refaire la conversion
