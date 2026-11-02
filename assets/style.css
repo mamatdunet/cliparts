@@ -451,3 +451,11 @@ body[data-bg="dark"] .tile .pic, body[data-bg="dark"] .stage, body[data-bg="dark
   .tv-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
   .tv-panel { position: absolute; inset: 0; width: auto; border-left: 0; }
 }
+
+/* Rotation dans la fiche */
+.rotate { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.seg.rot button { width: auto; padding: 0 11px; background: var(--surface-card); font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.seg.rot button[aria-pressed="true"] { background: var(--yellow); }
+.seg.rot button:hover { background: var(--yellow-100); }
+.seg.rot button[aria-pressed="true"]:hover { background: var(--yellow); }
+#d-img { transition: transform var(--dur-med) var(--ease-out); }

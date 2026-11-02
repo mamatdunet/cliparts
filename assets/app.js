@@ -393,12 +393,15 @@
   addEventListener('keydown', (e) => {
     if (e.key === '/' && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName) && !document.querySelector('dialog[open]')) { e.preventDefault(); $('#q').focus(); }
     if (dlg.open && (e.key === 'ArrowLeft' || e.key === 'ArrowRight') && document.activeElement.tagName !== 'SELECT') { e.preventDefault(); step(e.key === 'ArrowLeft' ? -1 : 1); }
+    if (dlg.open && (e.key === 'r' || e.key === 'R') && !/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName)) { rot = (rot + (e.key === 'R' ? 270 : 90)) % 360; applyRot(); }
   });
 
   // ---------- Fiche détaillée ----------
   const dlg = $('#detail');
   let current = -1;
+  let rot = 0;
   function openDetail(i) {
+    if (i !== current) rot = 0;
     current = i;
     const it = ITEMS[i], th = THEMES[it.t], coll = DB.collections.find((c) => c.id === th.c);
     const raster = EXT[th.c] !== 'svg';
@@ -431,6 +434,7 @@
       };
       img.complete ? dims() : img.addEventListener('load', dims, { once: true });
     }
+    applyRot();
     setFav(it);
     // Variantes (Cliparts Pro) ou voisins dans le thème (Micro Application)
     let rel, title;
@@ -452,6 +456,55 @@
     if (!dlg.open) dlg.showModal();
     writeHash();
   }
+
+  // ---------- Rotation : l'aperçu tourne, et les fichiers téléchargés ou copiés sont tournés eux aussi ----------
+  function applyRot() {
+    const it = ITEMS[current], ext = EXT[THEMES[it.t].c], img = $('#d-img');
+    for (const b of document.querySelectorAll('#d-rot [data-rot]')) b.setAttribute('aria-pressed', +b.dataset.rot === rot);
+    // Tourné d'un quart de tour, le dessin est réduit pour tenir dans la scène
+    const k = rot % 180 && img.clientWidth && img.clientHeight ? Math.min(img.clientWidth / img.clientHeight, img.clientHeight / img.clientWidth) : 1;
+    img.style.transform = rot ? `rotate(${rot}deg) scale(${k})` : '';
+    // Une fois tourné, un GIF devient une image fixe en PNG
+    $('#d-svg').lastChild.textContent = (rot && ext === 'gif' ? 'png' : ext).toUpperCase();
+    $('#d-svg').title = rot && ext === 'gif' ? "Image tournée, en PNG (l'animation n'est pas conservée)" : '';
+  }
+  // Tourne un SVG autour de son centre : la boîte (viewBox) pivote, le dessin passe dans un groupe tourné
+  function rotSvg(txt, r) {
+    if (!r) return txt;
+    const m = txt.match(/<svg[^>]*>/), vb = (m[0].match(/viewBox="([^"]+)"/) || [])[1]?.split(/[\s,]+/).map(Number);
+    if (!vb) return txt;
+    const cx = vb[0] + vb[2] / 2, cy = vb[1] + vb[3] / 2, [w, h] = r % 180 ? [vb[3], vb[2]] : [vb[2], vb[3]];
+    const head = m[0].replace(/viewBox="[^"]+"/, `viewBox="${cx - w / 2} ${cy - h / 2} ${w} ${h}"`);
+    return head + `<g transform="rotate(${r} ${cx} ${cy})">` + txt.slice(m.index + m[0].length).replace(/<\/svg>\s*$/, '</g></svg>');
+  }
+  function saveBlob(blob, name) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  async function rotatedFile(it) {
+    const ext = EXT[THEMES[it.t].c], name = `${fileBase(it)}-${rot}deg`;
+    if (ext === 'svg') return [new Blob([rotSvg(await (await fetch(it.path)).text(), rot)], { type: 'image/svg+xml' }), name + '.svg'];
+    const img = new Image();
+    await new Promise((ok, ko) => { img.onload = ok; img.onerror = ko; img.src = it.path; });
+    const cv = document.createElement('canvas'), w = img.naturalWidth, h = img.naturalHeight;
+    [cv.width, cv.height] = rot % 180 ? [h, w] : [w, h];
+    const ctx = cv.getContext('2d');
+    ctx.translate(cv.width / 2, cv.height / 2);
+    ctx.rotate(rot * Math.PI / 180);
+    ctx.drawImage(img, -w / 2, -h / 2);
+    const type = ext === 'jpg' ? 'image/jpeg' : 'image/png';
+    return [await new Promise((ok) => cv.toBlob(ok, type, 0.92)), name + (ext === 'jpg' ? '.jpg' : '.png')];
+  }
+  $('#d-img').addEventListener('load', () => { if (rot && current >= 0) applyRot(); });
+  $('#d-rot').addEventListener('click', (e) => { const b = e.target.closest('[data-rot]'); if (b) { rot = +b.dataset.rot; applyRot(); } });
+  $('#d-svg').addEventListener('click', async (e) => {
+    if (!rot) return;
+    e.preventDefault();
+    try { saveBlob(...(await rotatedFile(ITEMS[current]))); } catch { toast('Le téléchargement a échoué'); }
+  });
   function step(d) {
     const r = results.indexOf(current) + d;
     if (r >= 0 && r < results.length) openDetail(results[r]);
@@ -493,7 +546,7 @@
   });
   $('#d-copy').addEventListener('click', async () => {
     try {
-      const txt = await (await fetch(ITEMS[current].path)).text();
+      const txt = rotSvg(await (await fetch(ITEMS[current].path)).text(), rot);
       await navigator.clipboard.writeText(txt);
       toast('SVG copié dans le presse-papiers');
     } catch { toast('Copie impossible dans ce navigateur'); }
@@ -501,7 +554,7 @@
   $('#d-png').addEventListener('click', async () => {
     const it = ITEMS[current], size = +$('#d-png-size').value;
     try {
-      const txt = await (await fetch(it.path)).text();
+      const txt = rotSvg(await (await fetch(it.path)).text(), rot);
       const vb = (txt.match(/viewBox="([^"]+)"/) || [])[1]?.split(/[\s,]+/).map(Number) || [0, 0, 1, 1];
       const k = size / Math.max(vb[2], vb[3]);
       const w = Math.round(vb[2] * k), h = Math.round(vb[3] * k);
@@ -513,13 +566,7 @@
       cv.width = w; cv.height = h;
       cv.getContext('2d').drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
-      cv.toBlob((blob) => {
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `${fileBase(it)}-${size}px.png`;
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-      }, 'image/png');
+      cv.toBlob((blob) => saveBlob(blob, `${fileBase(it)}${rot ? '-' + rot + 'deg' : ''}-${size}px.png`), 'image/png');
     } catch { toast("L'export PNG a échoué"); }
   });
 

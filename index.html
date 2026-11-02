@@ -112,11 +112,21 @@
         <button class="btn" id="d-copy" type="button"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg><span>Copier le SVG</span></button>
         <button class="btn icon fav" id="d-fav" type="button" aria-pressed="false" aria-label="Ajouter aux favoris"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>
       </div>
+      <div class="rotate">
+        <span class="eyebrow" id="d-rot-l">Rotation</span>
+        <div class="seg rot" id="d-rot" role="group" aria-labelledby="d-rot-l">
+          <button type="button" data-rot="0" aria-pressed="true" title="Sens d'origine">0°</button>
+          <button type="button" data-rot="90" aria-pressed="false" title="Quart de tour à droite">90°</button>
+          <button type="button" data-rot="180" aria-pressed="false" title="Demi-tour">180°</button>
+          <button type="button" data-rot="270" aria-pressed="false" title="Quart de tour à gauche">270°</button>
+        </div>
+        <span class="small muted">s'applique aussi au téléchargement</span>
+      </div>
       <div class="related" id="d-related-wrap">
         <h3 id="d-related-title"></h3>
         <div class="related-grid" id="d-related"></div>
       </div>
-      <p class="hint">← → pour naviguer · Échap pour fermer</p>
+      <p class="hint">← → pour naviguer · R pour tourner · Échap pour fermer</p>
     </div>
   </div>
 </dialog>

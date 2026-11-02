@@ -32,7 +32,7 @@ Ce que fait le site :
   thèmes en grand, avec une vignette chacun et l'aperçu du thème choisi dans une colonne ;
 - grille virtualisée : seules les vignettes visibles sont dans la page, même pour 157 000 images ;
 - taille des vignettes réglable, fond blanc, damier ou sombre ;
-- fiche de chaque image : variantes, couleurs ou images voisines, téléchargement au format d'origine, export PNG des SVG
+- fiche de chaque image : variantes, couleurs ou images voisines, rotation de 90, 180 ou 270° (touche R), appliquée aussi aux fichiers, téléchargement au format d'origine, export PNG des SVG
   de 512 à 4 096 px, copie du SVG, favoris (gardés dans le navigateur) ;
 - adresse partageable : la recherche, les filtres et le dessin ouvert sont dans l'URL.
 - éditorial à l'accueil : une galerie du jour (fête ou saison du moment), des sélections thématiques
