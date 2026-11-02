@@ -103,6 +103,33 @@ for k, nom in mphotos['themes']:
 for t, n, kw in mphotos['items']:
     items.append([base + t, n])
 
+# Doublons : une image dont le fichier est identique à une autre n'apparaît qu'une fois. On garde de préférence
+# la version ClipArt & More (nommée, avec mots-clés) plutôt que sa reprise par Micro Application ; le nom du dossier
+# de chaque copie retirée devient un mot-clé de l'image gardée.
+import hashlib
+PRIO = {'imsi': 0}
+adult_set = set(adult)
+def digest(it):
+    c = collections[themes[it[0]][0]]
+    return hashlib.md5(open(os.path.join(root, 'cliparts', c['id'], themes[it[0]][1], f"{it[1]}.{c['ext']}"), 'rb').read()).hexdigest()
+groups = {}
+for i, it in enumerate(items):
+    groups.setdefault(digest(it), []).append(i)
+drop = set()
+for g in groups.values():
+    if len(g) < 2: continue
+    g.sort(key=lambda i: (PRIO.get(collections[themes[items[i][0]][0]]['id'], 1), i))
+    keep = items[g[0]]
+    keep += [0] * (5 - len(keep))
+    names = {themes[items[j][0]][2] for j in g[1:]} - {themes[keep[0]][2]}
+    keep[4] = ' '.join(filter(None, [keep[4] or '', *sorted(names)]))
+    if any(j in adult_set for j in g): adult_set.add(g[0])
+    drop.update(g[1:])
+old = items
+items = [it for i, it in enumerate(old) if i not in drop]
+adult = [k for k, i in enumerate(i for i in range(len(old)) if i not in drop) if i in adult_set]
+print(len(drop), 'doublons retirés')
+
 # Rubriques : les 964 dossiers des CD regroupés en une cinquantaine de thèmes généraux (tools/rubriques.py) ;
 # themes[i] = [collection, dossier, nom du dossier, rubrique]
 from rubriques import RUBRIQUES, rubrique

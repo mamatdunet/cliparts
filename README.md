@@ -1,27 +1,27 @@
 # Cliparthèque
 
-Une bibliothèque web pour parcourir, rechercher et télécharger **156 796 images** issues de sept
-CD-ROM de 1996 à 2003 : 80 612 cliparts vectoriels (convertis de WMF en SVG),
-4 011 photos, 28 250 images web, 41 579 animations GIF et 2 344 graphismes de la scène démo.
+Une bibliothèque web pour parcourir, rechercher et télécharger **155 770 images** issues de sept
+CD-ROM de 1996 à 2003 : 79 615 cliparts vectoriels (convertis de WMF en SVG),
+4 011 photos, 28 230 images web, 41 579 animations GIF et 2 335 graphismes de la scène démo.
 
 - **Cliparts Pro 12.000** (TLC Domus / Solver S.A., 1998) : 1 000 sujets nommés en français,
   en 12 000 dessins (chaque sujet seul ou avec l'un des 13 personnages récurrents).
-- **Plus de 50 000 Cliparts, vol. 1** (Micro Application, réf. 4366MC, 2002) : 19 999 dessins
-  rangés dans les 288 dossiers thématiques du CD.
+- **Plus de 50 000 Cliparts, vol. 1** (Micro Application, réf. 4366MC, 2002) : 19 110 dessins
+  rangés dans les 288 dossiers thématiques du CD (sans les 889 dessins repris du CD ClipArt & More d'IMSI).
 - **Photos** (même CD) : 3 010 photos JPG en 640 px, dans les 264 dossiers du CD.
-- **Images web** (même CD, Hemera Technologies 2001) : 25 000 boutons, 1 000 icônes, 1 000 puces,
+- **Images web** (même CD, Hemera Technologies 2001) : 25 000 boutons, 990 icônes, 990 puces,
   1 000 flèches et 250 traits de séparation en GIF, chaque forme en 10 couleurs.
-- **Szene-Cliparts** (E.D.V. CD-ROM GmbH, 2001) : 2 344 images de la scène démo Amiga et PC
+- **Szene-Cliparts** (E.D.V. CD-ROM GmbH, 2001) : 2 335 images de la scène démo Amiga et PC
   (logos de groupes, fantasy, visages, science-fiction…), converties de PCX en PNG.
   Source : [archive.org/details/szene-cliparts-2001](https://archive.org/details/szene-cliparts-2001).
-  196 images avec nudité ou contenu suggestif (liste : `tools/szene_adult.json`) ne s'affichent
+  195 images avec nudité ou contenu suggestif (liste : `tools/szene_adult.json`) ne s'affichent
   qu'une fois l'option « +18 ans » activée dans le panneau Crédits.
 - **ClipArt & More 2.5 Million** (IMSI, 2003), CD 1 : 15 663 dessins en 115 thèmes, avec les mots-clés
   anglais du CD et une traduction française des dossiers et des mots-clés courants (`tools/imsi_fr.json`).
   Source : [archive.org/details/imsi-clipart-more-2.5-million-3-cd-rom](https://archive.org/details/imsi-clipart-more-2.5-million-3-cd-rom).
 - **Animations web** (IMSI, 2003), CD 2 du même coffret : 41 579 GIF animés en 3D (boutons en 4 animations
   et 25 couleurs, objets, mots de pages web), chacun sur fond noir, transparent et blanc. Le CD 3 (sons) n'est pas repris.
-- **Masterclips 35 000 Clip Arts** (IMSI, 1996), CD 1 : 32 950 dessins en 117 thèmes (sans nom sur le CD :
+- **Masterclips 35 000 Clip Arts** (IMSI, 1996), CD 1 : 32 842 dessins en 117 thèmes (sans nom sur le CD :
   le thème sert de nom). Le CD 2 fournit **Photos Masterclips** : 1 001 photos BMP converties en JPG.
   Source : [archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng](https://archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng).
 
@@ -32,7 +32,7 @@ Ce que fait le site :
   regroupés en 57 thèmes généraux (`tools/rubriques.py`) ; le nom du dossier reste un mot-clé de recherche et un filtre
   depuis la fiche d'une image ; un bouton masque ou affiche les photos ; « Tout voir » ouvre tous les
   thèmes en grand, avec une vignette chacun et l'aperçu du thème choisi dans une colonne ;
-- grille virtualisée : seules les vignettes visibles sont dans la page, même pour 157 000 images ;
+- grille virtualisée : seules les vignettes visibles sont dans la page, même pour 156 000 images ;
 - taille des vignettes réglable, fond blanc, damier ou sombre ;
 - fiche de chaque image : variantes, couleurs ou images voisines, rotation de 90, 180 ou 270° (touche R), appliquée aussi aux fichiers, téléchargement au format d'origine, export PNG des SVG
   de 512 à 4 096 px, copie du SVG, favoris (gardés dans le navigateur) ;
@@ -112,6 +112,9 @@ python3 tools/build_masterclips.py <CLIPART du CD 1 Masterclips> <PHOTOS du CD 2
 python3 tools/build_index.py
 bash tools/pack_content.sh contenu-v2   # publie les archives, puis mettre contenu-v2 dans fetch_content.sh
 ```
+
+`build_index.py` écarte les images dont le fichier est identique à une autre (1 026, surtout des dessins IMSI repris
+par Micro Application) ; le dossier de chaque copie écartée devient un mot-clé de l'image gardée.
 
 Les dossiers `cliparts/<collection>/` ci-dessus n'existent qu'en local (ou dans `public/` après
 `fetch_content.sh`) : ils sont ignorés par git.
