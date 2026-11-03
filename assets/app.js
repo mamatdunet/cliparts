@@ -23,8 +23,10 @@
   let results = [];
   const state = { q: '', c: '', t: -1, s: -1, d: -1, fav: false, sel: '', a: '', seed: 0, photos: store.get('photos', true) !== false, bg: store.get('bg', 'white'), size: store.get('size', 148), adult: store.get('adult', false) === true };
   const favs = new Set(store.get('favs', []));
-  // Menus d'origine : le classement du logiciel d'époque, chargé au choix de la collection (data/menus/, produit par les scripts d'import)
-  const MENUS = { printartist: 'printartist', paphotos: 'printartist' };
+  // Menus d'origine : le classement d'époque, chargé au choix de la collection (data/menus/, produit par les scripts d'import).
+  // « dossiers » : la collection était simplement rangée en dossiers, l'index suffit
+  const MENUS = { printartist: 'printartist', paphotos: 'printartist', office97: 'office97', imsi: 'imsi', anim: 'anim', masterclips: 'masterclips',
+    pro: 'dossiers', mc: 'dossiers', photos: 'dossiers', web: 'dossiers', szene: 'dossiers', mphotos: 'dossiers', photoartist: 'dossiers' };
   const menuCache = new Map();
   let curMenu = null, menuCounts = [];
   state.m = '';
@@ -156,23 +158,44 @@
   function getMenu(c) {
     const id = MENUS[c];
     if (!id) return null;
+    if (id === 'dossiers') {
+      if (!menuCache.has(c)) menuCache.set(c, menuDossiers(c));
+      return menuCache.get(c);
+    }
     if (!menuCache.has(id)) {
       menuCache.set(id, null);
       fetch(`data/menus/${id}.json`).then((r) => r.json()).then((m) => { menuCache.set(id, prepareMenu(m)); update(); }).catch(() => {});
     }
     return menuCache.get(id);
   }
-  // Les images du menu y sont dans l'ordre alphabétique du logiciel ; celles que le site n'a pas gardées (doublons) tombent
+  function menuDossiers(c) {
+    const noms = new Map();
+    for (const th of THEMES) if (th.c === c) noms.set(th.nom, [...(noms.get(th.nom) || []), ...(BY_THEME[th.i] || [])]);
+    const categories = [...noms].sort((a, b) => a[0].localeCompare(b[0], 'fr')).map(([nom, ids]) => ({ nom, ids, set: new Set(ids) })).filter((x) => x.ids.length);
+    const ids = categories.flatMap((x) => x.ids);
+    return { titre: 'Dossiers du CD', note: 'Les dossiers du CD, avec les noms retenus par le site.', ids, rank: new Map(ids.map((i, r) => [i, r])), categories };
+  }
+  // Les images du menu y sont dans l'ordre du classement d'origine ; celles que le site n'a pas gardées (doublons) tombent.
+  // Une image y est [collection, fichier, nom], ou seulement son fichier quand le menu ne couvre qu'une collection
   function prepareMenu(m) {
     const ids = new Map();
-    for (const it of ITEMS) if (m.collections.includes(THEMES[it.t].c)) ids.set(THEMES[it.t].c + '/' + it.n, it.i);
-    const rangs = m.images.map(([c, n]) => ids.get(m.collections[c] + '/' + n) ?? -1);
+    for (const it of ITEMS) {
+      const th = THEMES[it.t];
+      if (m.collections.includes(th.c)) { ids.set(th.c + '/' + it.n, it.i); ids.set(`${th.c}/${th.dir}/${it.n}`, it.i); }
+    }
+    const rangs = m.images.map((x) => ids.get(typeof x === 'string' ? m.collections[0] + '/' + x : m.collections[x[0]] + '/' + x[1]) ?? -1);
     m.ids = rangs.filter((i) => i >= 0);
     m.rank = new Map(m.ids.map((i, r) => [i, r]));
+    const parNom = new Map();
     for (const cat of m.categories) {
       cat.ids = cat.images.map((r) => rangs[r]).filter((i) => i >= 0);
-      cat.set = new Set(cat.ids);
+      const p = cat.nom.lastIndexOf(' > ');
+      cat.parent = p > 0 ? cat.nom.slice(0, p) : '';
+      parNom.set(cat.nom, cat);
     }
+    // Un dossier contient les images de ses sous-dossiers (les parents précèdent toujours leurs enfants)
+    for (const cat of [...m.categories].reverse()) if (cat.parent) parNom.get(cat.parent).ids = parNom.get(cat.parent).ids.concat(cat.ids);
+    for (const cat of m.categories) cat.set = new Set(cat.ids);
     m.categories = m.categories.filter((cat) => cat.ids.length);
     return m;
   }
@@ -282,14 +305,17 @@
     const f = norm($('#theme-filter').value.trim()), M = curMenu;
     $('#menu-switch').hidden = !MENUS[state.c];
     for (const b of $('#menu-switch').children) b.setAttribute('aria-checked', (b.dataset.o === '1') === !!M);
-    $('#side-title').textContent = M ? 'Categories' : 'Thèmes';
-    $('#themes-all').hidden = !!M; $('#grabber-open').hidden = !M;
+    $('#menu-switch').children[0].textContent = MENUS[state.c] === 'dossiers' ? 'Dossiers du CD' : "Menu d'origine";
+    $('#side-title').textContent = M ? M.titre : 'Thèmes';
+    $('#themes-all').hidden = !!M; $('#grabber-open').hidden = !M || !M.fenetre;
     $('#menu-note').hidden = !M;
     $('#theme-filter').placeholder = M ? 'Filtrer les catégories…' : 'Filtrer les thèmes…';
     if (M) {
-      $('#menu-note').textContent = `Le classement de ${M.logiciel}, avec ses noms anglais et son ordre alphabétique.`;
-      $('#themes').innerHTML = M.categories.map((x, k) => [x, menuCounts[k]]).filter(([x, n]) => (n || x.nom === state.m) && (!f || norm(x.nom).includes(f))).map(([x, n]) =>
-        `<li><button type="button" data-m="${esc(x.nom)}" aria-pressed="${state.m === x.nom}"><span>${esc(x.nom)}${x.editeur ? `<small>${esc(x.editeur)}</small>` : ''}</span><span class="n">${fmt(n)}</span></button></li>`).join('') || '<li class="grp">Aucune catégorie</li>';
+      $('#menu-note').textContent = M.note;
+      // Un sous-dossier ne se montre que si son parent est ouvert ; le filtre, lui, cherche à tous les niveaux
+      const ouvert = (x) => !x.parent || state.m === x.parent || state.m.startsWith(x.parent + ' > ');
+      $('#themes').innerHTML = M.categories.map((x, k) => [x, menuCounts[k]]).filter(([x, n]) => (n || x.nom === state.m) && (f ? norm(x.nom).includes(f) : ouvert(x))).map(([x, n]) =>
+        `<li><button type="button" data-m="${esc(x.nom)}" aria-pressed="${state.m === x.nom}"${x.niveau && !f ? ` style="padding-left:${8 + x.niveau * 14}px"` : ''}><span>${esc(f ? x.nom : x.court || x.nom)}${x.editeur ? `<small>${esc(x.editeur)}</small>` : ''}</span><span class="n">${fmt(n)}</span></button></li>`).join('') || '<li class="grp">Aucune catégorie</li>';
       return;
     }
     let html = '';
@@ -329,7 +355,7 @@
   // Comme dans le logiciel, une lettre mène au début de cette lettre dans la liste
   function renderLetters(out) {
     const box = $('#letters');
-    box.hidden = !curMenu || !!state.seed || !out.length;
+    box.hidden = !curMenu || !curMenu.alpha || !!state.seed || !out.length;
     if (box.hidden) return;
     const debut = {};
     out.forEach((i, r) => { const c = ITEMS[i].nname[0] || '', k = c >= 'a' && c <= 'z' ? c.toUpperCase() : '#'; if (!(k in debut)) debut[k] = r; });

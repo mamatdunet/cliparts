@@ -100,7 +100,7 @@ cliparts/mphotos/<thème>/  Photos Masterclips : <code>.jpg + catalog.json
 cliparts/office97/<rubrique>/ Office 97 : <nom>.svg + catalog.json
 cliparts/printartist/<rubrique>/ Print Artist : <bibliothèque>_<nom>[_<couleur>].svg + catalog.json
 cliparts/paphotos/<rubrique>/ Photos Print Artist : <nom>.jpg + catalog.json
-data/menus/printartist.json   Menu d'origine de Print Artist : catégories du Graphics Grabber, images par ordre alphabétique
+data/menus/<collection>.json  Menus d'origine : Print Artist (tools/build_printartist.py), Office 97, ClipArt & More et Masterclips (tools/build_menus.py)
 cliparts/photoartist/<thème>/ Photo Artist : <code>.png + catalog.json
 tools/                     conversion WMF → SVG, construction de l'index, archives de contenu
 licences/                  licences d'origine des CD Cliparts Pro et Micro Application

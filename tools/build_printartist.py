@@ -292,7 +292,8 @@ def ecrire_menu(images):
         for c in cats: par_cat[c].append(r)
     colls = ['printartist', 'paphotos']
     d = os.path.join(root, 'data', 'menus'); os.makedirs(d, exist_ok=True)
-    json.dump({'collections': colls, 'logiciel': 'Print Artist 4.0 Plus', 'fenetre': 'Graphics Grabber',
+    json.dump({'collections': colls, 'titre': 'Categories', 'note': 'Le classement de Print Artist 4.0 Plus, avec ses noms anglais et son ordre alphabétique.',
+               'alpha': True, 'logiciel': 'Print Artist 4.0 Plus', 'fenetre': 'Graphics Grabber',
                'images': [[colls.index(c), n, nom] for c, n, nom, _ in images],
                'categories': [{'nom': c, 'editeur': EDITEURS.get(c, ''), 'images': par_cat[c]} for c in sorted(par_cat, key=str.casefold)]},
               open(os.path.join(d, 'printartist.json'), 'w'), ensure_ascii=False, separators=(',', ':'))

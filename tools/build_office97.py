@@ -1,14 +1,15 @@
 """Importe les cliparts de Microsoft Office 97 (« Microsoft Clipart Extra », archive.org/details/mso97clipart).
-Usage : python3 tools/build_office97.py <SVG-LibreOffice extrait du zip>
+Usage : python3 tools/build_office97.py <SVG-LibreOffice extrait du zip> <Clipart extrait de Clipart.zip>
 
 Le zip contient les WMF du CD convertis en SVG avec LibreOffice Draw 6.4 par dbohdan : on retire ce que l'export ajoute
 (masques de page, puces, identifiants, données d'Inkscape). Les fichiers n'ont qu'un nom court (reindr1, trkeyfun…) qui
 sert de nom au dessin et choisit la rubrique : voir SUJETS, un dessin va dans cliparts/office97/<rubrique>/<nom>.svg.
-Les 4 dossiers du CD (Office, Popular, Powerpnt, Scrbeans) deviennent des mots-clés."""
+Les 4 dossiers du CD (Office, Popular, Powerpnt, Scrbeans) deviennent des mots-clés, avec ceux de la Clip Gallery (Clipart.zip, .cag)."""
 import sys, os, re, json, shutil, hashlib
 import xml.etree.ElementTree as ET
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from build_openclipart import nettoyer, FR, NOMS, SLUGS
+import cag
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 src = sys.argv[1]
 dst = os.path.join(root, 'cliparts/office97')
@@ -170,6 +171,16 @@ for d in sorted(DOSSIERS):  # Office d'abord : Popular et Scrbeans reprennent qu
         it = [r, fn, re.sub(r'[_\d]+$', '', n).replace('_', ' ').capitalize() or n, DOSSIERS[d]]
         vus[h] = it
         items.append(it)
+# Les mots-clés anglais de la Clip Gallery
+CAG = {'Office': 'office.cag', 'Popular': 'pop97.cag', 'Powerpnt': 'powerpnt.cag', 'Scrbeans': 'scrbeans.cag'}
+par_nom = {it[1]: it for it in items}
+for d, f in CAG.items():
+    for nom, kw in cag.lire(os.path.join(sys.argv[2], d, f))[1].values():
+        n = nom[:-4].lower()
+        it = par_nom.get(f'{n}-{d.lower()}') or par_nom.get(n)
+        if it:
+            mots = it[3].split()
+            it[3] = ' '.join(mots + [w for w in dict.fromkeys(kw.lower().split()) if w not in mots and len(w) > 2])
 themes = sorted({it[0] for it in items}, key=SLUGS.index)
 tidx = {t: i for i, t in enumerate(themes)}
 json.dump({'source': 'Microsoft Clipart Extra, cliparts de Microsoft Office 97 (archive.org/details/mso97clipart), SVG-LibreOffice.zip', 'chemin': 'cliparts/office97/{dossier}/{n}.svg',
