@@ -1,11 +1,13 @@
 """Lit les catalogues .cag de la Clip Gallery d'Office 97 : un fichier composé OLE avec trois flux.
-Category : pour chaque catégorie, un numéro (u32), la longueur du nom (u8), le nom, le nombre d'images (u16), BE EE EB BE,
-           puis les numéros (u32) des images. Un nom finissant par \\x01\\x01 appartient à l'onglet Pictures, les autres à Clip Art.
+Category : pour chaque catégorie, un numéro (u32), la longueur du nom (u8), le nom, le nombre d'images plus un (u16), BE EE EB BE,
+           puis les numéros (u32) des images. Le nom dit l'onglet : rien à la fin pour Clip Art, \\x01\\x01 pour Pictures
+           (\\x01\\x02 Sounds, \\x01\\x03 Videos). Chaque onglet a son « (All Categories) », qui liste toutes ses images.
 Thumb    : la fiche de l'image n est à l'octet n × 400 : 4 octets, puis nom du fichier, chemin et mots-clés, chacun précédé de sa longueur (u8).
 Nail     : les vignettes."""
 import re, struct
 
 MARQUE = b'\xbe\xee\xeb\xbe'
+CLIP_ART, PICTURES = '', '\x01\x01'
 
 
 def flux(chemin):
@@ -42,8 +44,8 @@ def flux(chemin):
     return {nom: chaine(d)[:t] if t >= seuil else petite(d, t) for nom, ty, d, t in entrees if ty == 2}
 
 
-def lire(chemin):
-    """(catégories {nom : [numéros]}, fiches {numéro : (fichier, mots-clés)}) de l'onglet Clip Art."""
+def lire(chemin, onglet=CLIP_ART):
+    """(catégories {nom : [numéros]}, fiches {numéro : (fichier, mots-clés)}) d'un onglet, noms de catégories sans leur suffixe."""
     f = flux(chemin)
     c, t = f['Category'], f['Thumb']
     tetes = []
@@ -58,9 +60,10 @@ def lire(chemin):
         e = tetes[k + 1][0] if k + 1 < len(tetes) else len(c)
         cats[nom] = struct.unpack(f'<{(e - b) // 4}I', c[b:b + (e - b) // 4 * 4])
     fiches = {}
-    for i in cats.get('(All Categories)', ()):
+    for i in cats.get('(All Categories)' + onglet, ()):
         o = i * 400 + 4
         L = t[o]; nom = t[o + 1:o + 1 + L].decode('latin1'); o += 1 + L
         o += 1 + t[o]
         fiches[i] = (nom, t[o + 1:o + 1 + t[o]].decode('latin1').strip())
-    return {n: [i for i in v if i in fiches] for n, v in cats.items() if n != '(All Categories)' and not n.endswith('\x01\x01')}, fiches
+    sienne = lambda n: n[-2:] == onglet if onglet else n[-2:-1] != '\x01'
+    return {n.removesuffix(onglet): [i for i in v if i in fiches] for n, v in cats.items() if sienne(n) and not n.startswith('(All Categories)')}, fiches

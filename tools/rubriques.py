@@ -292,13 +292,22 @@ SOUS = {
     ],
 }
 
+# Photos PhotoDisc d'Office 97 : catégorie de l'onglet Pictures de la Clip Gallery : (dossier du CD, rubrique)
+PHOTODISC = {
+    'Backgrounds': ('Backgrnd', 'fonds'), 'Healthcare & Medicine': ('Medicine', 'sante'), 'Home & Family': ('Family', 'famille'),
+    'Industry': ('Industry', 'industrie'), 'Metaphors': ('Metaphor', 'divers'), 'Nature': ('Nature', 'paysages'),
+    'Office': ('Office', 'bureau'), 'People at Work': ('Work', 'metiers'), 'Science & Technology': ('Science', 'sciences'),
+    'Special Occasions': ('Occasion', 'occasions'), 'Sports & Leisure': ('Sports', 'sports'),
+    'Transportation': ('Trans', 'transports'), 'Travel': ('Travel', 'voyages'),
+}
+
 SLUGS = [s for s, _ in RUBRIQUES]
 _rx = [(re.compile(p), SLUGS.index(r)) for p, r in REGLES]
 
 
 def rubrique(coll, dossier, nom):
     """Indice de la rubrique d'un dossier, ou None s'il n'est pas classé."""
-    if coll in ('openclipart', 'office97', 'printartist', 'paphotos'):  # images déjà rangées par rubrique, « dossier.rubrique » s'ils ont changé (build_openclipart.py)
+    if coll in ('openclipart', 'office97', 'printartist', 'paphotos', 'photodisc'):  # images déjà rangées par rubrique, « dossier.rubrique » s'ils ont changé (build_openclipart.py)
         return SLUGS.index(dossier.split('.')[-1])
     key = f'{coll}:{norm(nom)}'
     for rx, i in _rx:

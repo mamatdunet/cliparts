@@ -9,13 +9,13 @@
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* stockage indisponible */ } },
   };
-  const COLL_COLOR = { '': 'var(--green)', pro: 'var(--blue)', mc: 'var(--red)', photos: 'var(--yellow)', web: 'var(--neutral-500)', szene: 'var(--ink)', imsi: 'var(--green-700)', anim: 'var(--red-700)', masterclips: 'var(--blue-700)', mphotos: 'var(--neutral-600)', office97: 'var(--blue-100)', printartist: 'var(--red-100)', paphotos: 'var(--yellow-100)', photoartist: 'var(--green-100)', openclipart: 'var(--neutral-300)' };
+  const COLL_COLOR = { '': 'var(--green)', pro: 'var(--blue)', mc: 'var(--red)', photos: 'var(--yellow)', web: 'var(--neutral-500)', szene: 'var(--ink)', imsi: 'var(--green-700)', anim: 'var(--red-700)', masterclips: 'var(--blue-700)', mphotos: 'var(--neutral-600)', office97: 'var(--blue-100)', printartist: 'var(--red-100)', paphotos: 'var(--yellow-100)', photoartist: 'var(--green-100)', photodisc: 'var(--neutral-200)', openclipart: 'var(--neutral-300)' };
   // Mots-clés en plus pour les types d'images web (noms anglais du CD compris)
   const KW = { boutons: 'button', icones: 'icon', puces: 'bullet', fleches: 'arrow', traits: 'ligne separateur line' };
   // Animations web : un bouton existe en 25 couleurs (même animation, même fond), un objet ou un mot en 3 fonds
   const animKey = (t, f) => THEMES[t].slug.startsWith('bouton') ? t + f[1] + f.slice(-1) : t + f.slice(0, -1);
   const LAST = new Set(['web', 'anim']);
-  const COLL_IDS = ['pro', 'mc', 'photos', 'web', 'szene', 'imsi', 'anim', 'masterclips', 'mphotos', 'office97', 'printartist', 'paphotos', 'photoartist', 'openclipart'];
+  const COLL_IDS = ['pro', 'mc', 'photos', 'web', 'szene', 'imsi', 'anim', 'masterclips', 'mphotos', 'office97', 'printartist', 'paphotos', 'photoartist', 'photodisc', 'openclipart'];
 
   // RUBS = thèmes généraux affichés ; THEMES = dossiers des CD (chaque dossier appartient à une rubrique)
   let DB, ITEMS = [], THEMES = [], RUBS = [], VARIANTS = new Map(), BY_THEME = [], BY_RUB = [], EXT = {}, BASE = {}, ADULT = new Set(), BY_KEY = new Map();
@@ -25,7 +25,7 @@
   const favs = new Set(store.get('favs', []));
   // Menus d'origine : le classement d'époque, chargé au choix de la collection (data/menus/, produit par les scripts d'import).
   // « dossiers » : la collection était simplement rangée en dossiers, l'index suffit
-  const MENUS = { printartist: 'printartist', paphotos: 'printartist', office97: 'office97', imsi: 'imsi', anim: 'anim', masterclips: 'masterclips',
+  const MENUS = { printartist: 'printartist', paphotos: 'printartist', office97: 'office97', photodisc: 'photodisc', imsi: 'imsi', anim: 'anim', masterclips: 'masterclips',
     pro: 'dossiers', mc: 'dossiers', photos: 'dossiers', web: 'dossiers', szene: 'dossiers', mphotos: 'dossiers', photoartist: 'dossiers' };
   const menuCache = new Map();
   let curMenu = null, menuCounts = [];
@@ -138,7 +138,7 @@
   // ---------- Filtrage ----------
   // Les images marquées +18 ans n'apparaissent nulle part tant que l'option n'est pas activée
   // Les photos peuvent être masquées (bouton Photos), sauf quand on parcourt une collection de photos
-  const PHOTO = new Set(['photos', 'mphotos', 'paphotos']);
+  const PHOTO = new Set(['photos', 'mphotos', 'paphotos', 'photodisc']);
   const visible = (i) => (state.adult || !ADULT.has(i)) && (state.photos || PHOTO.has(state.c) || !PHOTO.has(THEMES[ITEMS[i].t].c));
   function rng(seed) {
     return () => { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
@@ -209,7 +209,7 @@
     const bySub = new Uint32Array(subs.length);
     let photosHere = 0, inRub = 0;
     const toks = norm(state.q).split(/[^a-z0-9]+/).filter(Boolean);
-    const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0, szene: 0, imsi: 0, anim: 0, masterclips: 0, mphotos: 0, office97: 0, printartist: 0, paphotos: 0, photoartist: 0, openclipart: 0 };
+    const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0, szene: 0, imsi: 0, anim: 0, masterclips: 0, mphotos: 0, office97: 0, printartist: 0, paphotos: 0, photoartist: 0, photodisc: 0, openclipart: 0 };
     const byTheme = new Uint32Array(RUBS.length);
     const out = [];
     const scores = new Float32Array(ITEMS.length);

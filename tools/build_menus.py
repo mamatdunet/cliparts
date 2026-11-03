@@ -5,6 +5,7 @@ les collections rangées en simples dossiers n'ont pas de fichier : le site reco
 import sys, os, json, re, subprocess, collections
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cag
+from rubriques import PHOTODISC
 root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 clipart = sys.argv[1]
 os.makedirs(os.path.join(root, 'data/menus'), exist_ok=True)
@@ -61,6 +62,15 @@ for d, f in DOSSIERS:
         par_cat[c].update(rang[fich[i]] for i in ids)
 sauver('office97', {'collections': ['office97'], 'titre': 'Categories', 'note': "Le classement de la Clip Gallery d'Office 97, avec ses noms anglais. Ses mots-clés servent à la recherche.",
                     'images': images, 'categories': [{'nom': c, 'images': sorted(par_cat[c])} for c in sorted(par_cat, key=str.casefold)]}, attendus)
+
+# ---------- Photos Office 97 : l'onglet Pictures de la Clip Gallery ; un même nom existe dans deux catégories, on précise sa rubrique ----------
+cats, fiches = cag.lire(os.path.join(clipart, 'Photos', 'photos.cag'), cag.PICTURES)
+images, categories = [], []
+for c, ids in sorted(cats.items(), key=lambda x: x[0].casefold()):
+    categories.append({'nom': c, 'images': list(range(len(images), len(images) + len(ids)))})
+    images += [f'{PHOTODISC[c][1]}/{fiches[i][0][:-4].lower()}' for i in ids]
+sauver('photodisc', {'collections': ['photodisc'], 'titre': 'Pictures', 'note': "L'onglet Pictures de la Clip Gallery d'Office 97, avec ses noms anglais. Ses mots-clés servent à la recherche.",
+                     'images': images, 'categories': categories}, images)
 
 # ---------- ClipArt & More : les dossiers des deux CD ----------
 arbre('imsi', 'Dossiers du CD', "L'arborescence du CD, avec ses noms anglais.",

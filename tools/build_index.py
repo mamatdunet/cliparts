@@ -16,6 +16,7 @@ office97 = json.load(open(os.path.join(root, 'cliparts/office97/catalog.json')))
 printartist = json.load(open(os.path.join(root, 'cliparts/printartist/catalog.json')))
 paphotos = json.load(open(os.path.join(root, 'cliparts/paphotos/catalog.json')))
 photoartist = json.load(open(os.path.join(root, 'cliparts/photoartist/catalog.json')))
+photodisc = json.load(open(os.path.join(root, 'cliparts/photodisc/catalog.json')))
 # Openclipart n'entre dans l'index qu'une fois importé (tools/build_openclipart.py)
 ocp = os.path.join(root, 'cliparts/openclipart/catalog.json')
 oclip = json.load(open(ocp)) if os.path.exists(ocp) else None
@@ -47,6 +48,8 @@ collections = [
      'source': 'https://archive.org/details/pa4gold02', 'ext': 'jpg'},
     {'id': 'photoartist', 'nom': 'Photo Artist', 'annee': 1998, 'editeur': 'Sierra, CD de Print Artist Gold',
      'source': 'https://archive.org/details/pa4gold02', 'ext': 'png'},
+    {'id': 'photodisc', 'nom': 'Photos Office 97', 'annee': 1997, 'editeur': 'PhotoDisc, CD de Microsoft Office 97',
+     'source': 'https://archive.org/details/mso97clipart', 'ext': 'jpg'},
 ]
 if oclip:
     collections.append({'id': 'openclipart', 'nom': 'Openclipart', 'editeur': 'Openclipart, domaine public (CC0)',  # sans année : alimenté depuis 2004
@@ -146,12 +149,18 @@ for k, nom in photoartist['themes']:
     themes.append([12, k, nom])
 for t, n in photoartist['items']:
     items.append([base + t, n])
+# Photos Office 97 (PhotoDisc) : noms et mots-clés anglais de la Clip Gallery
+base = len(themes)
+for k, nom in photodisc['themes']:
+    themes.append([13, k, nom])
+for t, n, nom, kw in photodisc['items']:
+    items.append([base + t, n, nom, 0, kw])
 # Openclipart : titre anglais de l'auteur ; mots-clés = tags (et leur traduction) et auteur ; « +18 » si la page
 # du dessin le dit « Safe for Work? No »
 if oclip:
     base = len(themes)
     for k, nom in oclip['themes']:
-        themes.append([13, k, nom])
+        themes.append([14, k, nom])
     auteurs = {}  # items[5] : numéro de l'auteur dans « auteurs »
     for it in oclip['items']:
         if len(it) > 5:

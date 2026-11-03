@@ -1,0 +1,15 @@
+Photos PhotoDisc de Microsoft Office 97 (1996-1997)
+Source : https://archive.org/details/mso97clipart (Clipart.zip, dossier Photos)
+
+144 photos JPG reprises telles quelles (tools/build_photodisc.py), avec les catégories et les mots-clés
+de l'onglet Pictures de la Clip Gallery (Photos/photos.cag).
+  Fichier : cliparts/photodisc/<rubrique>/<nom>.jpg
+
+Conditions d'origine (Photos/Photodsc.doc du CD, résumé) :
+  le document renvoie au contrat de licence d'Office 97, qui n'est pas dans l'archive, et à un exemple de licence PhotoDisc ;
+  cet exemple donne un droit personnel et non transférable, sur un ordinateur, contre paiement du tarif prévu ;
+  les photos peuvent servir dans vos propres créations, y compris en ligne ou dans la publicité,
+  sauf livres imprimés, disques, emballages de logiciels et produits vendus à plus de 100 000 exemplaires ;
+  interdit de les distribuer ou de les mettre à disposition pour que d'autres les réutilisent, seules ou hors de votre création ;
+  interdit pour des travaux pornographiques, diffamatoires ou illégaux.
+  © 1996 PhotoDisc, Inc. et ses concédants.

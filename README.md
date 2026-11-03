@@ -27,6 +27,7 @@ et 180 922 dessins du domaine public d'Openclipart.
   Source : [archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng](https://archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng).
 - **Office 97** (Microsoft, 1997) : 3 180 dessins en 48 thèmes, convertis de WMF en SVG avec LibreOffice par dbohdan.
   Les fichiers n'ont qu'un nom court, qui sert de nom et choisit le thème (`SUJETS` dans `tools/build_office97.py`).
+  **Photos Office 97** : 144 JPG de PhotoDisc du même CD, avec les catégories et les mots-clés de l'onglet Pictures de la Clip Gallery.
   Source : [archive.org/details/mso97clipart](https://archive.org/details/mso97clipart).
 - **Print Artist Gold** (Sierra, 1998) : 5 421 dessins en SVG, un par jeu de couleurs, avec les noms et les mots-clés anglais
   du CD. **Photos Print Artist** : 1 346 JPG du même CD. **Photo Artist** : 597 images détourées de la démo présente sur le CD, en PNG.
@@ -98,12 +99,13 @@ cliparts/anim/<thème>/     Animations web : <code><fond B/T/W>.gif + catalog.js
 cliparts/masterclips/<thème>/ Masterclips : <code>.svg + catalog.json
 cliparts/mphotos/<thème>/  Photos Masterclips : <code>.jpg + catalog.json
 cliparts/office97/<rubrique>/ Office 97 : <nom>.svg + catalog.json
+cliparts/photodisc/<rubrique>/ Photos Office 97 : <nom>.jpg + catalog.json
 cliparts/printartist/<rubrique>/ Print Artist : <bibliothèque>_<nom>[_<couleur>].svg + catalog.json
 cliparts/paphotos/<rubrique>/ Photos Print Artist : <nom>.jpg + catalog.json
 data/menus/<collection>.json  Menus d'origine : Print Artist (tools/build_printartist.py), Office 97, ClipArt & More et Masterclips (tools/build_menus.py)
 cliparts/photoartist/<thème>/ Photo Artist : <code>.png + catalog.json
 tools/                     conversion WMF → SVG, construction de l'index, archives de contenu
-licences/                  licences d'origine des CD Cliparts Pro et Micro Application
+licences/                  licences d'origine des CD Cliparts Pro et Micro Application, conditions des photos PhotoDisc
 ```
 
 `data/index.json` : `rubriques` = `[slug, nom]`, `themes` = `[collection, dossier, nom, rubrique]`, `items` = `[thème, fichier, nom?, personnage?, mots-clés?]`,
@@ -123,6 +125,7 @@ python3 tools/build_imsi.py <CLIPART extrait de ClipaArt&More_2.5M_CD1_WIN.iso>
 python3 tools/build_anim.py <racine extraite de ClipaArt&More_2.5M_CD2_WIN.iso>
 python3 tools/build_masterclips.py <CLIPART du CD 1 Masterclips> <PHOTOS du CD 2 Masterclips>
 python3 tools/build_office97.py <SVG-LibreOffice extrait du zip de archive.org/details/mso97clipart>
+python3 tools/build_photodisc.py <Clipart extrait de Clipart.zip>
 python3 tools/build_printartist.py <racine extraite de UK_PA4.ISO>   # nécessite numpy et Pillow
 python3 tools/build_index.py
 bash tools/pack_content.sh contenu-v2   # publie les archives, puis mettre contenu-v2 dans fetch_content.sh
@@ -158,3 +161,6 @@ Voir `licences/cliparts-pro.txt` et `licences/micro-application.txt`. En résum�
 être intégrés à vos propres créations et publiés, mais pas revendus ni redistribués en tant que
 collection de clip arts. Sources : [archive.org/details/cliparts-pro](https://archive.org/details/cliparts-pro)
 et [archive.org/details/4366-mc](https://archive.org/details/4366-mc).
+
+Les photos d'Office 97 suivent des conditions plus strictes (`licences/photodisc.txt`) : le document du CD renvoie au contrat
+d'Office 97 et à un exemple de licence PhotoDisc, qui interdit de distribuer les images ou de les mettre à disposition d'autrui.
