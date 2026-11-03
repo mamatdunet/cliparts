@@ -298,14 +298,14 @@ body[data-bg="dark"] .tile .pic, body[data-bg="dark"] .stage, body[data-bg="dark
 
 /* Photos et images web */
 [hidden] { display: none !important; }
-.tile.k-photos .pic, .tile.k-mphotos .pic { padding: 0; }
-.tile.k-photos img, .tile.k-mphotos img { inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--radius-md) - 2px); }
+.tile.k-photos .pic, .tile.k-mphotos .pic, .tile.k-paphotos .pic { padding: 0; }
+.tile.k-photos img, .tile.k-mphotos img, .tile.k-paphotos img { inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--radius-md) - 2px); }
 .tile.k-web .lbl { visibility: hidden; }
 .k-web img, .k-anim img { image-rendering: pixelated; }
-.stage.k-photos, .stage.k-mphotos { padding: 24px; }
+.stage.k-photos, .stage.k-mphotos, .stage.k-paphotos { padding: 24px; }
 .stage.k-web img, .stage.k-anim img { width: auto; height: auto; max-height: none; }
-.related-grid.k-photos button, .related-grid.k-mphotos button { padding: 0; overflow: hidden; }
-.related-grid.k-photos img, .related-grid.k-mphotos img { object-fit: cover; }
+.related-grid.k-photos button, .related-grid.k-mphotos button, .related-grid.k-paphotos button { padding: 0; overflow: hidden; }
+.related-grid.k-photos img, .related-grid.k-mphotos img, .related-grid.k-paphotos img { object-fit: cover; }
 
 /* Szene-Cliparts : pixel art */
 .tile.k-szene .pic { padding: 6%; }
@@ -363,7 +363,7 @@ body[data-bg="dark"] .tile .pic, body[data-bg="dark"] .stage, body[data-bg="dark
 }
 .th:hover { border: var(--stroke) solid var(--ink); box-shadow: var(--shadow-pop); transform: translate(-1px, -1px); }
 .th img { position: absolute; inset: 12%; width: 76%; height: 76%; object-fit: contain; }
-.th.k-photos img, .th.k-mphotos img { inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--radius-md) - 2px); }
+.th.k-photos img, .th.k-mphotos img, .th.k-paphotos img { inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: calc(var(--radius-md) - 2px); }
 .th.k-web img, .th.k-anim img, .th.k-szene img { image-rendering: pixelated; }
 .th.k-szene img { inset: 5%; width: 90%; height: 90%; }
 .fetes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 16px 0 0; }
@@ -381,13 +381,13 @@ body[data-bg="dark"] .tile .pic, body[data-bg="dark"] .stage, body[data-bg="dark
 .card small { color: var(--text-muted); font-size: 13px; line-height: 1.4; }
 .mosaic { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; aspect-ratio: 1; background: var(--neutral-50); border-radius: var(--radius-sm); padding: 4px; }
 .mosaic img { width: 100%; height: 100%; min-height: 0; object-fit: contain; background: #fff; border-radius: 6px; padding: 8%; }
-.mosaic img.k-photos, .mosaic img.k-mphotos { object-fit: cover; padding: 0; }
+.mosaic img.k-photos, .mosaic img.k-mphotos, .mosaic img.k-paphotos { object-fit: cover; padding: 0; }
 .mosaic img.k-web, .mosaic img.k-anim, .mosaic img.k-szene { image-rendering: pixelated; }
 .mosaic img.k-szene { padding: 2%; }
 .cards.arts { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
 .cover { display: grid; place-items: center; aspect-ratio: 16 / 9; background: var(--blue-100); border-radius: var(--radius-sm); overflow: hidden; }
 .cover img { width: 70%; height: 80%; object-fit: contain; }
-.cover.k-photos img, .cover.k-mphotos img { width: 100%; height: 100%; object-fit: cover; }
+.cover.k-photos img, .cover.k-mphotos img, .cover.k-paphotos img { width: 100%; height: 100%; object-fit: cover; }
 .cover.k-szene img, .cover.k-anim img { image-rendering: pixelated; }
 .sel-head { margin: 4px 0 18px; max-width: 760px; }
 .sel-head h1 { font-size: 40px; margin: 4px 0 6px; }
@@ -516,7 +516,7 @@ body[data-bg="dark"] .tile .pic, body[data-bg="dark"] .stage, body[data-bg="dark
 .tp-folders .eyebrow { width: 100%; }
 .tp-folders .chip { padding: 0 10px; background: var(--surface-card); font-weight: 500; }
 .tp-folders .chip small { color: var(--text-muted); margin-left: 2px; }
-.tp-grid button.k-photos, .tp-grid button.k-mphotos { padding: 0; overflow: hidden; }
-.tp-grid button.k-photos img, .tp-grid button.k-mphotos img { object-fit: cover; }
+.tp-grid button.k-photos, .tp-grid button.k-mphotos, .tp-grid button.k-paphotos { padding: 0; overflow: hidden; }
+.tp-grid button.k-photos img, .tp-grid button.k-mphotos img, .tp-grid button.k-paphotos img { object-fit: cover; }
 .tp-grid button.k-web img, .tp-grid button.k-anim img, .tp-grid button.k-szene img { image-rendering: pixelated; }
 @media (max-width: 520px) { #photos-btn span { display: none; } #photos-btn { width: 34px; padding: 0; } }

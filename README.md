@@ -1,8 +1,8 @@
 # Cliparthèque
 
-Une bibliothèque web pour parcourir, rechercher et télécharger **336 692 images** : celles de sept
-CD-ROM de 1996 à 2003 (79 615 cliparts vectoriels convertis de WMF en SVG,
-4 011 photos, 28 230 images web, 41 579 animations GIF et 2 335 graphismes de la scène démo)
+Une bibliothèque web pour parcourir, rechercher et télécharger **347 236 images** : celles de neuf
+CD-ROM de 1996 à 2003 (88 216 cliparts vectoriels convertis de WMF ou de GFX en SVG,
+5 357 photos, 28 230 images web, 41 579 animations GIF, 2 335 graphismes de la scène démo et 597 images détourées)
 et 180 922 dessins du domaine public d'Openclipart.
 
 - **Cliparts Pro 12.000** (TLC Domus / Solver S.A., 1998) : 1 000 sujets nommés en français,
@@ -25,6 +25,12 @@ et 180 922 dessins du domaine public d'Openclipart.
 - **Masterclips 35 000 Clip Arts** (IMSI, 1996), CD 1 : 32 842 dessins en 117 thèmes (sans nom sur le CD :
   le thème sert de nom). Le CD 2 fournit **Photos Masterclips** : 1 001 photos BMP converties en JPG.
   Source : [archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng](https://archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng).
+- **Office 97** (Microsoft, 1997) : 3 180 dessins en 48 thèmes, convertis de WMF en SVG avec LibreOffice par dbohdan.
+  Les fichiers n'ont qu'un nom court, qui sert de nom et choisit le thème (`SUJETS` dans `tools/build_office97.py`).
+  Source : [archive.org/details/mso97clipart](https://archive.org/details/mso97clipart).
+- **Print Artist Gold** (Sierra, 1998) : 5 421 dessins en SVG, un par jeu de couleurs, avec les noms et les mots-clés anglais
+  du CD. **Photos Print Artist** : 1 346 JPG du même CD. **Photo Artist** : 597 images détourées de la démo présente sur le CD, en PNG.
+  Source : [archive.org/details/pa4gold02](https://archive.org/details/pa4gold02).
 
 Ce que fait le site :
 
@@ -34,7 +40,7 @@ Ce que fait le site :
   du dossier reste un mot-clé de recherche et un filtre depuis la fiche d'une image. Les grandes rubriques ont des
   sous-thèmes (Chats, Chiens, Fruits…, `SOUS`) ; un bouton masque ou affiche les photos, quand il y en a ; « Tout voir » ouvre tous les
   thèmes en grand, avec une vignette chacun et l'aperçu du thème choisi dans une colonne ;
-- grille virtualisée : seules les vignettes visibles sont dans la page, même pour 337 000 images ;
+- grille virtualisée : seules les vignettes visibles sont dans la page, même pour 347 000 images ;
 - taille des vignettes réglable, fond blanc, damier ou sombre ;
 - fiche de chaque image : variantes, couleurs ou images voisines, rotation de 90, 180 ou 270° (touche R), appliquée aussi aux fichiers, téléchargement au format d'origine, export PNG des SVG
   de 512 à 4 096 px, copie du SVG, favoris (gardés dans le navigateur) ;
@@ -79,7 +85,7 @@ puis http://localhost:8765. Vercel lance ce même script à chaque déploiement 
 
 ```
 index.html, assets/        l'interface (HTML, CSS, JS sans dépendance)
-data/index.json            l'index unique des neuf collections
+data/index.json            l'index unique des collections
 data/editorial.json        galeries du jour, sélections et liste des articles
 data/journal/              le texte des articles
 cliparts/pro/<thème>/      Cliparts Pro : <thème>_<personnage>_<numéro>.svg + catalog.json
@@ -91,6 +97,10 @@ cliparts/imsi/<thème>/     ClipArt & More : <numéro>.svg + catalog.json
 cliparts/anim/<thème>/     Animations web : <code><fond B/T/W>.gif + catalog.json
 cliparts/masterclips/<thème>/ Masterclips : <code>.svg + catalog.json
 cliparts/mphotos/<thème>/  Photos Masterclips : <code>.jpg + catalog.json
+cliparts/office97/<rubrique>/ Office 97 : <nom>.svg + catalog.json
+cliparts/printartist/<rubrique>/ Print Artist : <bibliothèque>_<nom>[_<couleur>].svg + catalog.json
+cliparts/paphotos/<rubrique>/ Photos Print Artist : <nom>.jpg + catalog.json
+cliparts/photoartist/<thème>/ Photo Artist : <code>.png + catalog.json
 tools/                     conversion WMF → SVG, construction de l'index, archives de contenu
 licences/                  licences d'origine des CD Cliparts Pro et Micro Application
 ```
@@ -111,6 +121,8 @@ python3 tools/build_szene.py <GRAPHICS extrait de Szene-Cliparts (2001).iso>   #
 python3 tools/build_imsi.py <CLIPART extrait de ClipaArt&More_2.5M_CD1_WIN.iso>
 python3 tools/build_anim.py <racine extraite de ClipaArt&More_2.5M_CD2_WIN.iso>
 python3 tools/build_masterclips.py <CLIPART du CD 1 Masterclips> <PHOTOS du CD 2 Masterclips>
+python3 tools/build_office97.py <SVG-LibreOffice extrait du zip de archive.org/details/mso97clipart>
+python3 tools/build_printartist.py <racine extraite de UK_PA4.ISO>   # nécessite numpy et Pillow
 python3 tools/build_index.py
 bash tools/pack_content.sh contenu-v2   # publie les archives, puis mettre contenu-v2 dans fetch_content.sh
 ```
@@ -133,6 +145,8 @@ par Micro Application et des dessins publiés deux fois sur Openclipart ; emprei
 
 Les dossiers `cliparts/<collection>/` ci-dessus n'existent qu'en local (ou dans `public/` après
 `fetch_content.sh`) : ils sont ignorés par git.
+
+Print Artist range ses dessins dans un format vectoriel à lui (`GFX/*.GFX`), décrit en tête de `tools/build_printartist.py`, tout comme ses mots-clés (`System/Data/*.pkw`).
 
 `tools/wmf.py` est un convertisseur WMF minimal (polygones, polylignes, rectangles, ellipses, arcs, textes,
 stylos et brosses).

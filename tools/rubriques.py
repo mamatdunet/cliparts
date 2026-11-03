@@ -36,6 +36,8 @@ REGLES = [
     (r'^szene:logos', 'logos-demo'), (r'^szene:pin-up', 'pin-up'), (r'^szene:polices', 'lettres'),
     (r'^szene:(bd|surrealisme|science-fiction|fantasy)', 'fantasy'), (r'^szene:visages', 'visages'),
     (r'^szene:personnages', 'gens'), (r'^szene:(scenes|divers)', 'divers'),
+    (r'^photoartist:alphabet', 'lettres'), (r'^photoartist:bulles', 'symboles'), (r'^photoartist:(cadres|plaques)', 'bordures'),
+    (r'^photoartist:divers', 'divers'), (r'^photoartist:bureau', 'bureau'), (r'^photoartist:espace', 'ciel-espace'),
     (r'^pro:bureau', 'bureau'), (r'^pro:maison', 'maison'), (r'^pro:metiers', 'metiers'), (r'^pro:nature', 'animaux'),
     (r'^pro:sports', 'sports'), (r'^pro:techniques', 'informatique'), (r'^pro:transports', 'transports'), (r'^pro:vie', 'gens'),
     (r'^photos:(bleu|jaune|orange|rouge|vert)$', 'fonds'),
@@ -296,7 +298,7 @@ _rx = [(re.compile(p), SLUGS.index(r)) for p, r in REGLES]
 
 def rubrique(coll, dossier, nom):
     """Indice de la rubrique d'un dossier, ou None s'il n'est pas classé."""
-    if coll == 'openclipart':  # dessins déjà rangés par rubrique, « dossier.rubrique » s'ils ont changé (build_openclipart.py)
+    if coll in ('openclipart', 'office97', 'printartist', 'paphotos'):  # images déjà rangées par rubrique, « dossier.rubrique » s'ils ont changé (build_openclipart.py)
         return SLUGS.index(dossier.split('.')[-1])
     key = f'{coll}:{norm(nom)}'
     for rx, i in _rx:

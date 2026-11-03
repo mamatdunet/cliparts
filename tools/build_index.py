@@ -1,4 +1,4 @@
-"""Construit data/index.json, l'index unique des neuf collections, à partir des catalogues.
+"""Construit data/index.json, l'index unique des collections, à partir des catalogues.
 Usage : python3 tools/build_index.py"""
 import json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -12,6 +12,10 @@ imsi = json.load(open(os.path.join(root, 'cliparts/imsi/catalog.json')))
 anim = json.load(open(os.path.join(root, 'cliparts/anim/catalog.json')))
 mclips = json.load(open(os.path.join(root, 'cliparts/masterclips/catalog.json')))
 mphotos = json.load(open(os.path.join(root, 'cliparts/mphotos/catalog.json')))
+office97 = json.load(open(os.path.join(root, 'cliparts/office97/catalog.json')))
+printartist = json.load(open(os.path.join(root, 'cliparts/printartist/catalog.json')))
+paphotos = json.load(open(os.path.join(root, 'cliparts/paphotos/catalog.json')))
+photoartist = json.load(open(os.path.join(root, 'cliparts/photoartist/catalog.json')))
 # Openclipart n'entre dans l'index qu'une fois importé (tools/build_openclipart.py)
 ocp = os.path.join(root, 'cliparts/openclipart/catalog.json')
 oclip = json.load(open(ocp)) if os.path.exists(ocp) else None
@@ -35,6 +39,14 @@ collections = [
      'source': 'https://archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng', 'ext': 'svg'},
     {'id': 'mphotos', 'nom': 'Photos Masterclips', 'annee': 1996, 'editeur': 'IMSI, CD 2 de Masterclips',
      'source': 'https://archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng', 'ext': 'jpg'},
+    {'id': 'office97', 'nom': 'Office 97', 'annee': 1997, 'editeur': 'Microsoft',
+     'source': 'https://archive.org/details/mso97clipart', 'ext': 'svg'},
+    {'id': 'printartist', 'nom': 'Print Artist Gold', 'annee': 1998, 'editeur': 'Sierra',
+     'source': 'https://archive.org/details/pa4gold02', 'ext': 'svg'},
+    {'id': 'paphotos', 'nom': 'Photos Print Artist', 'annee': 1998, 'editeur': 'Sierra, CD de Print Artist Gold',
+     'source': 'https://archive.org/details/pa4gold02', 'ext': 'jpg'},
+    {'id': 'photoartist', 'nom': 'Photo Artist', 'annee': 1998, 'editeur': 'Sierra, CD de Print Artist Gold',
+     'source': 'https://archive.org/details/pa4gold02', 'ext': 'png'},
 ]
 if oclip:
     collections.append({'id': 'openclipart', 'nom': 'Openclipart', 'editeur': 'Openclipart, domaine public (CC0)',  # sans année : alimenté depuis 2004
@@ -112,12 +124,34 @@ for k, nom in mphotos['themes']:
     themes.append([8, k, nom])
 for t, n, kw in mphotos['items']:
     items.append([base + t, n])
+# Office 97 : nom de fichier du CD (rubrique déjà choisie par build_office97.py) ; mots-clés = dossier du CD
+base = len(themes)
+for k, nom in office97['themes']:
+    themes.append([9, k, nom])
+for t, n, nom, kw in office97['items']:
+    items.append([base + t, n, nom, 0, kw])
+# Print Artist Gold (Sierra) : noms et mots-clés anglais du CD, traduits quand on sait ; Photo Artist : le thème sert de nom
+base = len(themes)
+for k, nom in printartist['themes']:
+    themes.append([10, k, nom])
+for t, n, nom, kw in printartist['items']:
+    items.append([base + t, n, nom, 0, kw])
+base = len(themes)
+for k, nom in paphotos['themes']:
+    themes.append([11, k, nom])
+for t, n, nom, kw in paphotos['items']:
+    items.append([base + t, n, nom, 0, kw])
+base = len(themes)
+for k, nom in photoartist['themes']:
+    themes.append([12, k, nom])
+for t, n in photoartist['items']:
+    items.append([base + t, n])
 # Openclipart : titre anglais de l'auteur ; mots-clés = tags (et leur traduction) et auteur ; « +18 » si la page
 # du dessin le dit « Safe for Work? No »
 if oclip:
     base = len(themes)
     for k, nom in oclip['themes']:
-        themes.append([9, k, nom])
+        themes.append([13, k, nom])
     auteurs = {}  # items[5] : numéro de l'auteur dans « auteurs »
     for it in oclip['items']:
         if len(it) > 5:

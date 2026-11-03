@@ -8,7 +8,7 @@ BASE="https://github.com/mamatdunet/cliparts/releases/download/${CONTENT_RELEASE
 rm -rf public && mkdir -p public/cliparts
 cp -R index.html assets data public/
 pids=()
-for c in pro mc photos web szene imsi anim masterclips mphotos; do
+for c in pro mc photos web szene imsi anim masterclips mphotos office97 printartist paphotos photoartist; do
   curl -fsSL --retry 3 "$BASE/$c.tar.gz" | tar -xzf - -C public/cliparts & pids+=($!)
 done
 for p in "${pids[@]}"; do wait "$p"; done
