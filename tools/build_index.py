@@ -39,6 +39,10 @@ collections = [
 if oclip:
     collections.append({'id': 'openclipart', 'nom': 'Openclipart', 'annee': 2004, 'editeur': 'Openclipart, domaine public (CC0)',
                         'source': 'https://openclipart.org/', 'ext': 'svg'})
+    # Les dessins sont servis depuis Vercel Blob (tools/upload_openclipart.mjs), trop nombreux pour un déploiement
+    bp = os.path.join(root, 'cliparts/openclipart/blob.json')
+    if os.path.exists(bp):
+        collections[-1]['base'] = json.load(open(bp))['base']
 themes, items = [], []
 tidx = {}
 for t, th in sorted(pro['themes'].items(), key=lambda kv: kv[1]['nom']):
@@ -114,10 +118,11 @@ if oclip:
     base = len(themes)
     for k, nom in oclip['themes']:
         themes.append([9, k, nom])
+    auteurs = {}  # items[5] : numéro de l'auteur dans « auteurs »
     for it in oclip['items']:
         if len(it) > 5:
             adult.append(len(items))
-        items.append([base + it[0], it[1], it[2], 0, it[3]])
+        items.append([base + it[0], it[1], it[2], 0, it[3], auteurs.setdefault(it[4], len(auteurs))])
 
 # Doublons : une image dont le fichier est identique à une autre n'apparaît qu'une fois. On garde de préférence
 # la version ClipArt & More (nommée, avec mots-clés) plutôt que sa reprise par Micro Application ; le nom du dossier
@@ -125,12 +130,21 @@ if oclip:
 import hashlib
 PRIO = {'imsi': 0}
 adult_set = set(adult)
+# Empreintes gardées d'une fois sur l'autre (cliparts/_md5.json) : Openclipart pèse près de 90 Go
+cache_p = os.path.join(root, 'cliparts/_md5.json')
+cache = json.load(open(cache_p)) if os.path.exists(cache_p) else {}
 def digest(it):
     c = collections[themes[it[0]][0]]
-    return hashlib.md5(open(os.path.join(root, 'cliparts', c['id'], themes[it[0]][1], f"{it[1]}.{c['ext']}"), 'rb').read()).hexdigest()
+    rel = f"{c['id']}/{themes[it[0]][1]}/{it[1]}.{c['ext']}"
+    st = os.stat(os.path.join(root, 'cliparts', rel))
+    sig = f'{st.st_size}:{int(st.st_mtime)}'
+    if rel not in cache or cache[rel][0] != sig:
+        cache[rel] = [sig, hashlib.md5(open(os.path.join(root, 'cliparts', rel), 'rb').read()).hexdigest()]
+    return cache[rel][1]
 groups = {}
 for i, it in enumerate(items):
     groups.setdefault(digest(it), []).append(i)
+json.dump(cache, open(cache_p, 'w'), separators=(',', ':'))
 drop = set()
 for g in groups.values():
     if len(g) < 2: continue
@@ -155,6 +169,8 @@ for th in themes:
     th.append(r)
 out = {'v': 2, 'collections': collections, 'persos': pro['persos'], 'rubriques': [list(r) for r in RUBRIQUES],
        'themes': themes, 'items': items, 'adult': adult}
+if oclip:
+    out['auteurs'] = list(auteurs)
 os.makedirs(os.path.join(root, 'data'), exist_ok=True)
 json.dump(out, open(os.path.join(root, 'data/index.json'), 'w'), ensure_ascii=False, separators=(',', ':'))
 print(len(items), 'items', len(themes), 'themes')

@@ -18,7 +18,7 @@
   const COLL_IDS = ['pro', 'mc', 'photos', 'web', 'szene', 'imsi', 'anim', 'masterclips', 'mphotos', 'openclipart'];
 
   // RUBS = thèmes généraux affichés ; THEMES = dossiers des CD (chaque dossier appartient à une rubrique)
-  let DB, ITEMS = [], THEMES = [], RUBS = [], VARIANTS = new Map(), BY_THEME = [], BY_RUB = [], EXT = {}, ADULT = new Set(), BY_KEY = new Map();
+  let DB, ITEMS = [], THEMES = [], RUBS = [], VARIANTS = new Map(), BY_THEME = [], BY_RUB = [], EXT = {}, BASE = {}, ADULT = new Set(), BY_KEY = new Map();
   let EDITO = { selections: [], articles: [] }, SEL = new Map(), ART = new Map();
   let results = [];
   const state = { q: '', c: '', t: -1, d: -1, fav: false, sel: '', a: '', seed: 0, photos: store.get('photos', true) !== false, bg: store.get('bg', 'white'), size: store.get('size', 148), adult: store.get('adult', false) === true };
@@ -39,18 +39,19 @@
     if (ed) EDITO = ed;
     for (const s of EDITO.selections) SEL.set(s.id, s);
     for (const a of EDITO.articles) ART.set(a.id, a);
-    for (const c of db.collections) EXT[c.id] = c.ext;
+    for (const c of db.collections) { EXT[c.id] = c.ext; BASE[c.id] = c.base || 'cliparts/'; }
     ADULT = new Set(db.adult || []);
     RUBS = db.rubriques.map(([slug, nom], i) => ({ i, slug, nom, norm: norm(nom) }));
     THEMES = db.themes.map(([c, slug, nom, r], i) => ({ i, c: db.collections[c].id, slug, nom, r, key: db.collections[c].id + ':' + slug, norm: norm(nom), total: 0 }));
-    ITEMS = db.items.map(([t, f, nom, v, kw], i) => {
+    ITEMS = db.items.map(([t, f, nom, v, kw, a], i) => {
       const th = THEMES[t];
       th.total++;
       const perso = v ? db.persos[v.toUpperCase()] || '' : '';
       const name = nom ? nom.replace(/\.$/, '') : '';
       const label = name ? name + (perso ? ' · ' + perso : '') : th.nom;
       const key = `${th.c}/${th.slug}/${f}`;
-      const it = { i, t, f, name, perso, label, key, path: `cliparts/${key}.${EXT[th.c]}` };
+      const it = { i, t, f, name, perso, label, key, path: `${BASE[th.c]}${key}.${EXT[th.c]}` };
+      if (a != null) it.auteur = db.auteurs[a];
       it.nname = norm(name);
       it.hay = norm([name, perso, th.nom, RUBS[th.r].nom, db.collections[db.themes[t][0]].nom, KW[th.slug] || '', kw || '', f].join(' '));
       // Variantes : personnages (Cliparts Pro) ou couleurs d'une même forme (images web)
@@ -190,7 +191,7 @@
   // ---------- Barre latérale ----------
   function renderColls(counts) {
     const box = $('#colls');
-    const list = [{ id: '', nom: 'Toutes les collections', sub: '7 CD-ROM, 1996-2003' }, ...DB.collections.map((c) => ({ id: c.id, nom: c.nom, sub: `${c.editeur.split(' (')[0]}, ${c.annee}` }))];
+    const list = [{ id: '', nom: 'Toutes les collections', sub: '7 CD-ROM et Openclipart' }, ...DB.collections.map((c) => ({ id: c.id, nom: c.nom, sub: `${c.editeur.split(' (')[0]}, ${c.annee}` }))];
     box.innerHTML = list.map((c) => `<button class="coll" role="radio" type="button" data-c="${c.id}" aria-checked="${state.c === c.id}">
       <span class="dot" style="background:${COLL_COLOR[c.id]}"></span><span>${c.nom}<small>${c.sub}</small></span><span class="n">${counts ? fmt(counts[c.id]) : ''}</span></button>`).join('');
   }
@@ -442,6 +443,8 @@
       it.perso ? `<button class="tag" type="button" data-act="perso">avec ${esc(it.perso)}</button>` : '',
       th.c === 'web' ? `<span class="tag file">forme ${it.f.slice(0, 4)} · couleur ${+it.f.slice(5)}</span>` : '',
       `<span class="tag file" id="d-file">${it.f}.${EXT[th.c]}</span>`,
+      it.auteur ? `<a class="tag" href="https://openclipart.org/artist/${encodeURIComponent(it.auteur)}" target="_blank" rel="noopener" title="Ses dessins sur Openclipart">par ${esc(it.auteur)}</a>` : '',
+      th.c === 'openclipart' ? `<a class="tag" href="https://openclipart.org/detail/${it.f}" target="_blank" rel="noopener">Fiche Openclipart</a>` : '',
     ].join('');
     const dl = $('#d-svg');
     dl.href = it.path;
@@ -527,9 +530,11 @@
   $('#d-img').addEventListener('load', () => { if (rot && current >= 0) applyRot(); });
   $('#d-rot').addEventListener('click', (e) => { const b = e.target.closest('[data-rot]'); if (b) { rot = +b.dataset.rot; applyRot(); } });
   $('#d-svg').addEventListener('click', async (e) => {
-    if (!rot) return;
+    const it = ITEMS[current], ext = EXT[THEMES[it.t].c];
+    if (!rot && !/^https?:/.test(it.path)) return;
     e.preventDefault();
-    try { saveBlob(...(await rotatedFile(ITEMS[current]))); } catch { toast('Le téléchargement a échoué'); }
+    // Sans rotation, un fichier venu d'un autre site (Vercel Blob) : l'attribut download y est ignoré
+    try { saveBlob(...(rot ? await rotatedFile(it) : [await (await fetch(it.path)).blob(), fileBase(it) + '.' + ext])); } catch { toast('Le téléchargement a échoué'); }
   });
   function step(d) {
     const r = results.indexOf(current) + d;

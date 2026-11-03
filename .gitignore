@@ -6,3 +6,5 @@ cliparts/
 public/
 .vercel
 __pycache__/
+node_modules/
+.env

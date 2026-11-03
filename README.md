@@ -1,8 +1,9 @@
 # Cliparthèque
 
-Une bibliothèque web pour parcourir, rechercher et télécharger **155 770 images** issues de sept
-CD-ROM de 1996 à 2003 : 79 615 cliparts vectoriels (convertis de WMF en SVG),
-4 011 photos, 28 230 images web, 41 579 animations GIF et 2 335 graphismes de la scène démo.
+Une bibliothèque web pour parcourir, rechercher et télécharger **336 692 images** : celles de sept
+CD-ROM de 1996 à 2003 (79 615 cliparts vectoriels convertis de WMF en SVG,
+4 011 photos, 28 230 images web, 41 579 animations GIF et 2 335 graphismes de la scène démo)
+et 180 922 dessins du domaine public d'Openclipart.
 
 - **Cliparts Pro 12.000** (TLC Domus / Solver S.A., 1998) : 1 000 sujets nommés en français,
   en 12 000 dessins (chaque sujet seul ou avec l'un des 13 personnages récurrents).
@@ -32,7 +33,7 @@ Ce que fait le site :
   regroupés en 57 thèmes généraux (`tools/rubriques.py`) ; le nom du dossier reste un mot-clé de recherche et un filtre
   depuis la fiche d'une image ; un bouton masque ou affiche les photos ; « Tout voir » ouvre tous les
   thèmes en grand, avec une vignette chacun et l'aperçu du thème choisi dans une colonne ;
-- grille virtualisée : seules les vignettes visibles sont dans la page, même pour 156 000 images ;
+- grille virtualisée : seules les vignettes visibles sont dans la page, même pour 337 000 images ;
 - taille des vignettes réglable, fond blanc, damier ou sombre ;
 - fiche de chaque image : variantes, couleurs ou images voisines, rotation de 90, 180 ou 270° (touche R), appliquée aussi aux fichiers, téléchargement au format d'origine, export PNG des SVG
   de 512 à 4 096 px, copie du SVG, favoris (gardés dans le navigateur) ;
@@ -113,16 +114,21 @@ python3 tools/build_index.py
 bash tools/pack_content.sh contenu-v2   # publie les archives, puis mettre contenu-v2 dans fetch_content.sh
 ```
 
-**Openclipart** (en préparation) : `python3 tools/build_openclipart.py` importe les ~185 000 dessins du domaine public
+**Openclipart** : `python3 tools/build_openclipart.py` importe les ~185 000 dessins du domaine public
 d'[openclipart.org](https://openclipart.org/) dans `cliparts/openclipart/<rubrique>/<id>.svg`. La liste vient du sitemap ;
 la page de chaque dessin donne ses tags (qui choisissent la rubrique), son auteur et l'indication « Safe for Work? »
 (sinon réservé à l'option +18 ans). Les SVG sont nettoyés : scripts, liens externes et données d'Inkscape ou
-d'Illustrator retirés, nombres arrondis. 8 téléchargements à la fois (`--parallele`), environ 9 heures ; le script
+d'Illustrator retirés, nombres arrondis. Téléchargements en parallèle (`--parallele`, 4 conseillé : à 8 le site a fini par ne plus répondre) ; le script
 ralentit puis s'arrête si le site refuse les requêtes, et reprend où il s'est arrêté (`--max N` pour un essai, `--catalogue` pour reclasser sans réseau). `build_index.py` ajoute la
 collection dès que `cliparts/openclipart/catalog.json` existe.
 
-`build_index.py` écarte les images dont le fichier est identique à une autre (1 026, surtout des dessins IMSI repris
-par Micro Application) ; le dossier de chaque copie écartée devient un mot-clé de l'image gardée.
+Trop nombreux pour un déploiement Vercel (90 Go, 184 000 fichiers), ces dessins sont servis depuis un store
+Vercel Blob (`cliparts-openclipart`, connecté au projet) : `cd tools && npm install && vercel env pull .env
+--environment development && node --env-file=.env upload_openclipart.mjs` envoie les fichiers pas encore envoyés
+et note l'adresse du store dans `cliparts/openclipart/blob.json`, que `build_index.py` reporte dans l'index.
+
+`build_index.py` écarte les images dont le fichier est identique à une autre (4 399, surtout des dessins IMSI repris
+par Micro Application et des dessins publiés deux fois sur Openclipart ; empreintes en cache dans `cliparts/_md5.json`) ; le dossier de chaque copie écartée devient un mot-clé de l'image gardée.
 
 Les dossiers `cliparts/<collection>/` ci-dessus n'existent qu'en local (ou dans `public/` après
 `fetch_content.sh`) : ils sont ignorés par git.
