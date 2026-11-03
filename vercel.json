@@ -1,8 +1,15 @@
 {
   "buildCommand": "bash tools/fetch_content.sh",
   "outputDirectory": "public",
-  "installCommand": "",
+  "installCommand": "npm ci --omit=dev",
   "cleanUrls": true,
+  "functions": {
+    "api/apercu.js": { "includeFiles": "node_modules/dejavu-fonts-ttf/ttf/DejaVuSans.ttf", "maxDuration": 30 }
+  },
+  "rewrites": [
+    { "source": "/i/:cle*", "destination": "/api/fiche?cle=:cle*" },
+    { "source": "/apercu/:cle*", "destination": "/api/apercu?cle=:cle*" }
+  ],
   "headers": [
     { "source": "/cliparts/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }] }
   ]

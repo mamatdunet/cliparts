@@ -12,4 +12,5 @@ for c in pro mc photos web szene imsi anim masterclips mphotos office97 printart
   curl -fsSL --retry 3 "$BASE/$c.tar.gz" | tar -xzf - -C public/cliparts & pids+=($!)
 done
 for p in "${pids[@]}"; do wait "$p"; done
+node tools/build_fiches.mjs
 echo "public/ : $(find public -type f | wc -l) fichiers"

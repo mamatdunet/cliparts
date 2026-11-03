@@ -84,7 +84,13 @@
     openFromHash(open);
     syncArticle();
   }
-  const hashItem = () => new URLSearchParams(location.hash.slice(1)).get('i');
+  // Une fiche ouverte a sa propre adresse, /i/<clé>, que le serveur sait présenter dans les aperçus de liens (api/fiche.js) ;
+  // les filtres restent dans le fragment, et les anciennes adresses #i=<clé> marchent toujours
+  const itemPath = (key) => '/i/' + key.split('/').map(encodeURIComponent).join('/');
+  const hashItem = () => {
+    const m = location.pathname.match(/^\/i\/(.+)$/);
+    return new URLSearchParams(location.hash.slice(1)).get('i') || (m ? m[1].split('/').map(decodeURIComponent).join('/') : null);
+  };
   function openFromHash(open) {
     const it = open && ITEMS.find((x) => x.key === open);
     if (it && visible(it.i)) openDetail(it.i); else if (dlg.open) dlg.close();
@@ -122,18 +128,24 @@
     if (state.sel) p.set('sel', state.sel);
     if (state.a) p.set('a', state.a);
     if (state.seed) p.set('mix', state.seed);
-    if (current >= 0) p.set('i', ITEMS[current].key);
     const h = p.toString();
-    history.replaceState(null, '', h ? '#' + h : location.pathname + location.search);
+    history.replaceState(null, '', (current >= 0 ? itemPath(ITEMS[current].key) : '/') + (h ? '#' + h : ''));
+    lastUrl = location.href;
+    document.title = current >= 0 ? `${ITEMS[current].label} · Cliparthèque` : 'Cliparthèque';
   }
-  addEventListener('hashchange', () => {
-    if (!DB) return;
+  // « Retour » peut ne changer que le chemin (/i/… vers /) : hashchange ne suffit pas
+  let lastUrl = location.href;
+  const onNavigate = () => {
+    if (!DB || location.href === lastUrl) return;
+    lastUrl = location.href;
     const open = hashItem();
     current = -1;
     const sel = state.sel;
     readHash(); update(); openFromHash(open); syncArticle();
     if (state.sel !== sel) scrollTop();
-  });
+  };
+  addEventListener('hashchange', onNavigate);
+  addEventListener('popstate', onNavigate);
 
   // ---------- Filtrage ----------
   // Les images marquées +18 ans n'apparaissent nulle part tant que l'option n'est pas activée

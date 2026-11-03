@@ -82,6 +82,27 @@ python3 -m http.server 8765 -d public
 
 puis http://localhost:8765. Vercel lance ce même script à chaque déploiement (voir `vercel.json`).
 
+Pour essayer aussi les adresses de fiche et les aperçus de liens, sans rien télécharger si `cliparts/` existe déjà :
+
+```bash
+npm install
+node tools/build_fiches.mjs
+node tools/dev_server.mjs
+```
+
+## Aperçus de liens
+
+Une fiche ouverte a sa propre adresse, `/i/<collection>/<dossier>/<fichier>` (les filtres restent dans le fragment,
+les anciennes adresses `#i=…` marchent toujours). Le fragment n'étant jamais envoyé au serveur, c'est ce qui permet
+un aperçu propre à chaque image dans iMessage ou sur les réseaux sociaux :
+
+- `api/fiche.js` renvoie `index.html` avec le titre, le texte et l'image de ce clipart ;
+- `api/apercu.js` génère à la demande un PNG 1200×630 sur fond blanc (resvg), mis en cache par Vercel, pour tout ce qui n'est pas un JPG : les SVG sont refusés comme `og:image`, les GIF sont minuscules, les PNG souvent transparents. Un GIF animé y perd donc son animation ;
+- les images +18 ans ne montrent ni image ni nom ;
+- ces fonctions lisent `public/fiches/<tranche>.json`, produits au build par `tools/build_fiches.mjs` (l'index de 33 Mo serait trop lourd), et demandent les fiches, l'accueil et les images au site lui-même : sur un déploiement protégé par mot de passe, elles renvoient vers l'ancienne adresse, sans aperçu.
+
+L'image de la page d'accueil, `assets/og.png`, vient de `tools/build_og.mjs`.
+
 ## Organisation
 
 ```
