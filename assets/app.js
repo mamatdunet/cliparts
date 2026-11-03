@@ -29,7 +29,7 @@
   let geo = { cols: 1, tw: 0, rowH: 1, lbl: 0 };
 
   // ---------- Données ----------
-  // L'éditorial (galerie du jour, sélections, journal) est facultatif : le site marche sans lui
+  // L'éditorial (galerie du jour, sélections, articles) est facultatif : le site marche sans lui
   const edito = fetch('data/editorial.json').then((r) => r.json()).catch(() => null);
   fetch('data/index.json').then((r) => r.json()).then(async (db) => init(db, await edito))
     .catch(() => { $('#count').textContent = "Impossible de charger l'index."; });
@@ -602,7 +602,7 @@
     } catch { toast("L'export PNG a échoué"); }
   });
 
-  // ---------- Éditorial : galerie du jour, sélections, journal (data/editorial.json) ----------
+  // ---------- Éditorial : galerie du jour, sélections, articles « Autour des cliparts » (data/editorial.json) ----------
   // Une sélection réunit les images qui répondent à l'une de ses règles : q = recherche, t = thème (* final = préfixe)
   const selCache = new Map();
   function selSet(id) {
@@ -688,10 +688,10 @@
         <a class="btn primary" href="#sel=${today.id}">Voir les ${fmt(selCount(today.id))} images</a></div>
         <div class="today-pics">${pick(today.id, 8).map((i) => thumb(i, '#sel=' + today.id)).join('')}</div></section>`;
     }
-    // Le journal, à côté de la galerie du jour, pour donner le contexte dès l'arrivée
+    // Les articles, à côté de la galerie du jour, pour donner le contexte dès l'arrivée
     if (EDITO.articles.length) {
-      html += `<aside class="une-journal" aria-labelledby="journal-h"><h2 id="journal-h" class="eyebrow">Le journal</h2>
-        ${EDITO.articles.map((a) => artRow(a)).join('')}<a class="more" href="#a=sommaire">Tout le journal →</a></aside>`;
+      html += `<aside class="une-journal" aria-labelledby="journal-h"><h2 id="journal-h" class="eyebrow">Autour des cliparts</h2>
+        ${EDITO.articles.map((a) => artRow(a)).join('')}<a class="more" href="#a=sommaire">Tous les articles →</a></aside>`;
     }
     if (html) html = `<div class="une${today ? '' : ' seul'}">${html}</div>`;
     const fetes = EDITO.selections.filter((s) => s.quand && s !== today);
@@ -722,7 +722,7 @@
   async function fillArticle(id) {
     const body = $('#art-body');
     if (id === 'sommaire') {
-      body.innerHTML = `<p class="eyebrow">Journal</p><h2 id="art-title">Histoires de cliparts</h2>
+      body.innerHTML = `<p class="eyebrow">Autour des cliparts</p><h2 id="art-title">Histoires de cliparts</h2>
         <p class="chapo">D'où viennent ces images, qui les a dessinées, et ce qu'elles sont devenues.</p>
         <div class="cards arts">${EDITO.articles.map(artCard).join('')}</div>`;
       return;
@@ -733,7 +733,7 @@
       const r = await fetch(`data/journal/${id}.html`);
       if (!r.ok) throw new Error(r.status);
       const when = new Date(a.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-      body.innerHTML = `<p class="eyebrow">Journal · ${when}</p><h2 id="art-title">${esc(a.titre)}</h2><p class="chapo">${esc(a.chapo)}</p>${await r.text()}`;
+      body.innerHTML = `<p class="eyebrow">Autour des cliparts · ${when}</p><h2 id="art-title">${esc(a.titre)}</h2><p class="chapo">${esc(a.chapo)}</p>${await r.text()}`;
     } catch { body.innerHTML = '<p>Article introuvable.</p>'; return; }
     for (const el of body.querySelectorAll('.planche')) {
       const ids = el.dataset.sel ? pick(el.dataset.sel, +el.dataset.n || 8) : el.dataset.items.split(/\s+/).map((k) => BY_KEY.get(k)).filter((i) => i != null && visible(i));

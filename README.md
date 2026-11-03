@@ -39,7 +39,7 @@ Ce que fait le site :
   de 512 à 4 096 px, copie du SVG, favoris (gardés dans le navigateur) ;
 - adresse partageable : la recherche, les filtres et le dessin ouvert sont dans l'URL.
 - éditorial à l'accueil : une galerie du jour (fête ou saison du moment), des sélections thématiques
-  et un journal d'articles sur l'histoire du clip art.
+  et des articles sur l'histoire du clip art (« Autour des cliparts »).
 
 ## Éditorial
 

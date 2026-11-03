@@ -1,5 +1,5 @@
 {
-  "_aide": "Galerie du jour, sélections et journal. Une sélection réunit les images qui répondent à l'une de ses règles : q = recherche (tous les mots), t = thème « collection:dossier » (un * final pour un préfixe), les deux ensemble pour chercher dans un thème. « quand » en fait une galerie du jour : la première dont une période contient la date du jour s'affiche à l'accueil. Une période est « MM-JJ/MM-JJ » ou « AAAA-MM-JJ/AAAA-MM-JJ » (pour l'actualité), et accepte paques, meres et peres (fête des mères et des pères) avec un décalage en jours : « paques-47 » = mardi gras.",
+  "_aide": "Galerie du jour, sélections et articles (Autour des cliparts). Une sélection réunit les images qui répondent à l'une de ses règles : q = recherche (tous les mots), t = thème « collection:dossier » (un * final pour un préfixe), les deux ensemble pour chercher dans un thème. « quand » en fait une galerie du jour : la première dont une période contient la date du jour s'affiche à l'accueil. Une période est « MM-JJ/MM-JJ » ou « AAAA-MM-JJ/AAAA-MM-JJ » (pour l'actualité), et accepte paques, meres et peres (fête des mères et des pères) avec un décalage en jours : « paques-47 » = mardi gras.",
   "selections": [
     {
       "id": "nouvel-an", "titre": "Bonne année !", "quand": ["12-26/01-06"],
@@ -7,9 +7,24 @@
       "regles": [{ "q": "nouvel an" }, { "q": "champagne" }, { "q": "feu artifice" }, { "q": "new year" }]
     },
     {
+      "id": "galette-des-rois", "titre": "Galette des rois", "quand": ["01-07/01-15"],
+      "texte": "Une fève, une couronne en papier doré et un roi ou une reine d'un jour : les couronnes de la Cliparthèque, des blasons anciens aux dessins d'Openclipart.",
+      "regles": [{ "q": "galette" }, { "q": "couronne" }, { "q": "crown" }]
+    },
+    {
+      "id": "chandeleur", "titre": "La Chandeleur", "quand": ["01-30/02-02"],
+      "texte": "Crêpes qui sautent, piles de pancakes et sirop d'érable : de quoi décorer l'invitation au goûter.",
+      "regles": [{ "q": "crepe" }, { "q": "pancake" }]
+    },
+    {
       "id": "saint-valentin", "titre": "Saint-Valentin", "quand": ["02-07/02-14"],
       "texte": "Cœurs percés, cupidons et déclarations : les cartes d'amour faites maison avaient leur rayon dans chaque CD de cliparts.",
       "regles": [{ "q": "saint-valentin" }, { "q": "valentine" }, { "q": "cupid" }]
+    },
+    {
+      "id": "nouvel-an-chinois", "titre": "Nouvel an chinois", "quand": ["2027-02-03/2027-02-06", "2028-01-21/2028-01-30", "2029-02-08/2029-02-14"],
+      "texte": "Dragons, lanternes rouges et animaux du zodiaque : la fête du printemps vue par les illustrateurs d'Openclipart.",
+      "regles": [{ "q": "chinese new year" }, { "q": "lunar new year" }, { "q": "lantern chinese" }, { "q": "dragon chinese" }]
     },
     {
       "id": "carnaval", "titre": "Mardi gras et carnaval", "quand": ["paques-54/paques-47"],
@@ -30,6 +45,11 @@
       "id": "paques", "titre": "Joyeuses Pâques", "quand": ["paques-7/paques+1"],
       "texte": "Œufs décorés, lapins et cloches : la chasse aux œufs commence ici.",
       "regles": [{ "q": "paques" }, { "q": "easter" }, { "q": "lapin" }, { "q": "bunny" }]
+    },
+    {
+      "id": "jour-de-la-terre", "titre": "Jour de la Terre", "quand": ["04-18/04-22"],
+      "texte": "Planètes, arbres et flèches du recyclage : les pictogrammes de l'écologie, des années 90 à aujourd'hui.",
+      "regles": [{ "q": "earth day" }, { "q": "planet earth" }, { "q": "recycl" }, { "q": "ecology" }]
     },
     {
       "id": "fete-du-travail", "titre": "Fête du travail", "quand": ["04-28/05-01"],
@@ -57,6 +77,16 @@
       "regles": [{ "q": "14 juillet" }, { "q": "feu artifice" }, { "q": "fete nationale" }, { "t": "masterclips:drapeaux-du-monde" }]
     },
     {
+      "id": "tour-de-france", "titre": "Le Tour de France", "quand": ["07-01/07-27"],
+      "texte": "Bicyclettes, coureurs penchés sur le guidon et vélos de tous les jours, pour suivre les étapes de juillet.",
+      "regles": [{ "q": "bicycle" }, { "q": "cyclist" }, { "q": "cycling" }, { "q": "bicyclette" }]
+    },
+    {
+      "id": "journee-du-chat", "titre": "Journée internationale du chat", "quand": ["08-06/08-08"],
+      "texte": "Le 8 août, place aux chats : chatons, matous de dessin animé et silhouettes félines.",
+      "regles": [{ "q": "kitten" }, { "q": "chaton" }, { "q": "kitty" }, { "q": "cat feline" }]
+    },
+    {
       "id": "vacances", "titre": "Les vacances", "quand": ["07-01/08-31"],
       "texte": "Plages, parasols, valises et cartes postales : l'été comme dans un catalogue de voyages de 1998.",
       "regles": [{ "q": "plage" }, { "q": "beach" }, { "q": "vacances" }, { "q": "ete vacances" }, { "t": "mphotos:cotes" }]
@@ -67,9 +97,34 @@
       "regles": [{ "t": "masterclips:education" }, { "q": "school" }, { "q": "ecole" }, { "q": "pencil" }]
     },
     {
+      "id": "journees-du-patrimoine", "titre": "Journées du patrimoine", "quand": ["09-14/09-21"],
+      "texte": "Châteaux, cathédrales et monuments, dessinés au trait ou photographiés : le patrimoine en clip art, le temps d'un week-end de visites.",
+      "regles": [{ "q": "chateau" }, { "q": "castle" }, { "q": "cathedral" }, { "q": "monument" }]
+    },
+    {
+      "id": "fete-de-la-science", "titre": "Fête de la science", "quand": ["10-01/10-12"],
+      "texte": "Microscopes, atomes, éprouvettes et télescopes : les images des exposés de sciences, du CD-ROM de 1996 aux schémas d'Openclipart.",
+      "regles": [{ "q": "microscope" }, { "q": "atom" }, { "q": "telescope" }, { "q": "laboratory" }, { "q": "chemistry" }]
+    },
+    {
+      "id": "semaine-du-gout", "titre": "Semaine du goût", "quand": ["10-13/10-17"],
+      "texte": "Fruits, légumes et paniers du marché : de quoi illustrer menus et ateliers cuisine.",
+      "regles": [{ "q": "fruit" }, { "q": "legume" }, { "q": "vegetable" }]
+    },
+    {
       "id": "halloween", "titre": "Halloween", "quand": ["10-18/10-31"],
       "texte": "Citrouilles, sorcières, chauves-souris et squelettes : la fête que les CD américains ont fait entrer dans les maisons françaises.",
       "regles": [{ "q": "halloween" }, { "q": "pumpkin" }, { "q": "witch" }, { "q": "skeleton" }]
+    },
+    {
+      "id": "11-novembre", "titre": "11 Novembre", "quand": ["11-08/11-11"],
+      "texte": "Le bleuet et le coquelicot, fleurs du souvenir en France et au Royaume-Uni, pour l'anniversaire de l'armistice de 1918.",
+      "regles": [{ "q": "bleuet" }, { "q": "cornflower" }, { "q": "poppy" }, { "q": "coquelicot" }]
+    },
+    {
+      "id": "saint-nicolas", "titre": "Saint-Nicolas", "quand": ["12-04/12-06"],
+      "texte": "Le 6 décembre, dans l'Est de la France, en Belgique et aux Pays-Bas, saint Nicolas apporte les friandises avant le père Noël.",
+      "regles": [{ "q": "saint nicolas" }, { "q": "saint nicholas" }, { "q": "sinterklaas" }]
     },
     {
       "id": "noel", "titre": "Noël", "quand": ["12-01/12-25"],
@@ -146,6 +201,31 @@
       "id": "disparus", "titre": "Dinosaures et espèces disparues",
       "texte": "Tyrannosaures, mammouths et dodos, dessinés pour les exposés de sciences naturelles.",
       "regles": [{ "t": "imsi:especes-disparues" }, { "t": "imsi:prehistoire" }]
+    },
+    {
+      "id": "robots", "titre": "Robots",
+      "texte": "Robots de fer-blanc, androïdes et petits automates rigolos : l'avenir tel que l'imaginent les dessinateurs.",
+      "regles": [{ "q": "robot" }]
+    },
+    {
+      "id": "mandalas", "titre": "Mandalas et motifs géométriques",
+      "texte": "Rosaces, kaléidoscopes et motifs à répéter à l'infini : la spécialité de quelques illustrateurs très prolifiques d'Openclipart.",
+      "regles": [{ "q": "mandala" }, { "q": "geometric pattern" }, { "q": "kaleidoscope" }]
+    },
+    {
+      "id": "gravures", "titre": "Gravures anciennes",
+      "texte": "Gravures sur bois et illustrations de vieux livres, numérisées et vectorisées : le clip art d'avant le clip art.",
+      "regles": [{ "q": "engraving" }, { "q": "gravure" }]
+    },
+    {
+      "id": "silhouettes", "titre": "Silhouettes",
+      "texte": "Personnages, animaux et paysages en ombres chinoises : des formes nettes, faciles à découper ou à graver.",
+      "regles": [{ "q": "silhouette" }]
+    },
+    {
+      "id": "cartes-du-monde", "titre": "Cartes du monde",
+      "texte": "Planisphères, pays et cartes-drapeaux : la géographie en vecteurs, à agrandir sans perte.",
+      "regles": [{ "q": "world map" }, { "q": "map country" }, { "q": "map flag" }]
     }
   ],
   "articles": [
