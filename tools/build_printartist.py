@@ -244,6 +244,62 @@ def mots_de(nom, biblio=None):
                 return par_num[num[i]]
     return par_num.get(num[pl[0]], []) if pl else []
 
+# ---------- Menu d'origine : la fenêtre « Graphics Grabber » du logiciel ----------
+# Bibliothèques d'après le tableau « GFX File and JPEG Image Collections » de l'aide (Pawin.hlp) : fichier GFX → (catégorie, éditeur)
+BIBLIOS = {}
+for noms, fichiers, editeur in (
+        ('Small Business', (314, 315), 'Instant Image'), ('Sports Action', (316, 317), 'Focus'), ('Focus', (320,), 'Focus'),
+        ('ProArt', (321, 322, 323, 324, 325, 326, 333, 335, 351, 353), 'Multi Ad Services'),
+        ('Contemporary', (327, 334, 342, 349, 352, 355, 361, 365), 'M&M Data Systems'),
+        ('Modern Woodcuts', (328, 341, 354, 360, 362, 363, 364), 'M&M Data Systems'),
+        ('Sierra', (329, 359, 366), 'Sierra'), ('Classic Woodcuts', (330, 331, 348, 358), 'Scan This Book')):
+    for rang, f in enumerate(fichiers, 1):
+        BIBLIOS[str(f)] = (f'{noms} {rang}' if len(fichiers) > 1 else noms, editeur)
+BIBLIOS.update({'332': ('Country', 'Kay Craig'), '343': ('Doodlers (P)', 'DJ Inkers'), '367': ('TNT', 'TNT Designs')})
+EDITEURS = {'Photos 1/Produktum': 'Produktum AB', 'Photos 1-4/Aztech New Media': 'Aztech New Media', 'Photos5 & 6/Tom Kelley Studios (P)': 'Tom Kelley Studios',
+            'Photos 7/Digital Media Prod. (P)': 'Digital Media Productions', 'Textiles/Digital Design Collect. (P)': 'The Digital Design Collection (The Meller Archive)',
+            'Victorian/The Gifted Line (P)': 'The Gifted Line (John Grossman Collection of Antique Images)', 'Sierra Art': 'Sierra', 'Sierra Art/Tracy Tattro (P)': 'Tracey Tatro',
+            **dict(BIBLIOS.values())}
+PHOTOS = {k for k in EDITEURS if re.match('Photos|Textiles|Victorian|Sierra Art', k)}
+# Bibliothèques sans catégorie dans le catalogue : leur fichier la donne (les « file groups » de Cdf.pkw)
+GROUPES = {'ANIMALS': 'Animals', 'ART': 'Art', 'ASTRO': 'Astrology', 'AUDIOVI': 'audio video', 'BACK': 'Backgrounds', 'BORDERS': 'Borders', 'EDUCATI': 'Education', 'FLORA': 'Flora',
+           'FOOD': 'Food', 'HOME': 'Home', 'ICONS': 'Icons/Accents', 'MUSIC': 'Music', 'OCCASIO': 'Occasion', 'OFFICE': 'Office', 'PEOPLE': 'People', 'PLACES': 'Places',
+           'SPORTS': 'Sports', 'SYMBOLS': 'Symbols', 'TOOLS': 'Tools', 'TOYS': 'Toys', 'VEHICLE': 'Vehicles'}
+ECARTES = re.compile(r'(?i)t\d|jpeg |bmp |print artist bonus')
+
+
+def categories(mots, fichier=None):
+    """Catégories du Graphics Grabber d'une image. fichier = bibliothèque GFX, None pour une photo."""
+    biblio = BIBLIOS.get(fichier)
+    cats = {biblio[0]} if biblio else set()
+    for m in mots:
+        if not m.startswith('^'): continue
+        s = re.sub(r'\s+', ' ', m[1:]).strip()
+        # L'alignement du catalogue n'est pas parfait : une bibliothèque ou une série de photos ne vaut que pour ses propres fichiers
+        if ECARTES.match(s) or (s in EDITEURS and not (s in PHOTOS if fichier is None else biblio and s == biblio[0])): continue
+        cats.add(s)
+    if not cats and fichier:
+        g = GROUPES.get(fichier.upper()[1:] if fichier[:1].upper() in 'TGK' else fichier.upper())
+        if g: cats.add(g)
+    return cats
+
+
+def ecrire_menu(images):
+    """data/menus/printartist.json : les images par ordre alphabétique de nom, et pour chaque catégorie les rangs de ses images."""
+    images.sort(key=lambda x: (x[2].casefold(), x[1]))
+    par_cat = collections.defaultdict(list)
+    for r, (_, _, _, cats) in enumerate(images):
+        for c in cats: par_cat[c].append(r)
+    colls = ['printartist', 'paphotos']
+    d = os.path.join(root, 'data', 'menus'); os.makedirs(d, exist_ok=True)
+    json.dump({'collections': colls, 'logiciel': 'Print Artist 4.0 Plus', 'fenetre': 'Graphics Grabber',
+               'images': [[colls.index(c), n, nom] for c, n, nom, _ in images],
+               'categories': [{'nom': c, 'editeur': EDITEURS.get(c, ''), 'images': par_cat[c]} for c in sorted(par_cat, key=str.casefold)]},
+              open(os.path.join(d, 'printartist.json'), 'w'), ensure_ascii=False, separators=(',', ':'))
+    print('menu', len(images), 'images', len(par_cat), 'catégories')
+
+
+menu = []
 dst = vider('printartist')
 items, vus, ecarts, poids = [], set(), 0, 0
 for f, b in FICHS.items():
@@ -269,6 +325,7 @@ for f, b in FICHS.items():
             texte = svg(w, h, formes, j, PAL)
             poids += len(texte)
             open(os.path.join(dst, r, n + '.svg'), 'w').write(texte)
+            if j == defaut: menu.append(['printartist', n, nom, categories(mots_de(nom, L), court)])
             nom_j = nom if j == defaut else f'{nom} ({jeu})'
             kw_j = kw if j == defaut else ' '.join(filter(None, [kw, FR.get(jeu.lower(), ''), jeu.lower()]))
             items.append([r, n, nom_j, kw_j])
@@ -285,7 +342,9 @@ for base, f in sorted(jpgs.items()):
     os.makedirs(os.path.join(dst, r), exist_ok=True)
     shutil.copyfile(os.path.join(jpg_dir, f), os.path.join(dst, r, n + '.jpg'))
     items.append([r, n, nom, kw])
+    menu.append(['paphotos', n, nom, categories(mots_de(base))])
 ecrire('paphotos', 'Print Artist Gold (Sierra, 1998), dossier JPG', 'jpg', items)
+ecrire_menu(menu)
 
 # ---------- Images détourées de la démo de Photo Artist ----------
 from PIL import Image

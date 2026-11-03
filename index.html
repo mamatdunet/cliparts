@@ -40,11 +40,19 @@
     </div>
     <div class="colls" id="colls" role="radiogroup" aria-label="Collection"></div>
     <div class="side-head">
-      <h2>Thèmes</h2>
+      <h2 id="side-title">Thèmes</h2>
       <button class="btn small" id="themes-all" type="button" title="Voir tous les thèmes en grand">
         <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Tout voir
       </button>
+      <button class="btn small" id="grabber-open" type="button" hidden>
+        <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18M9 9v10"/></svg>La fenêtre
+      </button>
     </div>
+    <div class="menu-switch" id="menu-switch" role="radiogroup" aria-label="Classement" hidden>
+      <button type="button" role="radio" data-o="1">Menu d'origine</button>
+      <button type="button" role="radio" data-o="0">Thèmes du site</button>
+    </div>
+    <p class="menu-note" id="menu-note" hidden></p>
     <input class="theme-filter" id="theme-filter" type="search" placeholder="Filtrer les thèmes…" aria-label="Filtrer les thèmes">
     <ul class="themes" id="themes"></ul>
   </aside>
@@ -80,6 +88,7 @@
       </div>
     </div>
     <nav class="subs" id="subs" aria-label="Sous-thèmes" hidden></nav>
+    <nav class="letters" id="letters" aria-label="Aller à la lettre" hidden></nav>
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" hidden>
       <p class="empty-title">Rien trouvé.</p>
@@ -199,12 +208,13 @@
       </section>
       <section>
         <h3>Print Artist Gold</h3>
-        <p class="small">Sierra On-Line, 1998 (version anglaise 4.2). 5 421 dessins vectoriels, avec leurs noms et leurs mots-clés anglais, tirés des bibliothèques GFX du CD (ProArt, Classic et Modern Woodcuts, Contemporary, Sierra, Doodlers…) et convertis en SVG. Un dessin proposé en plusieurs couleurs donne une image par jeu de couleurs. © 1998 Sierra On-Line, Inc. et ses concédants.</p>
+        <p class="small">Sierra On-Line, 1998 (version anglaise 4.2). 5 421 dessins vectoriels, avec leurs noms et leurs mots-clés anglais, tirés des bibliothèques GFX du CD et convertis en SVG. Un dessin proposé en plusieurs couleurs donne une image par jeu de couleurs. D'après l'aide du logiciel, la majorité des images viennent de GraphicCorp ; bibliothèques : ProArt (Multi Ad Services), Contemporary et Modern Woodcuts (M&amp;M Data Systems), Classic Woodcuts (Scan This Book), Small Business (Instant Image), Sports Action et Focus (Focus), Country (Kay Craig), TNT (TNT Designs), Doodlers (D.J. Inkers), Sierra. L'aide cite aussi International Microcomputer Software, Virginia Davis, Gazelle Technologies (Educorp) et 1-2-3 Ideas (Hammerhead Publishing). © 1998 Sierra On-Line, Inc. et ses concédants.</p>
+        <p class="small">Le menu d'origine du site reprend les catégories et l'ordre alphabétique de la fenêtre « Graphics Grabber » du logiciel. La mention (P) y signale, d'après la même aide, les images dont l'usage commercial était interdit sans licence spéciale.</p>
         <p class="small"><a href="https://archive.org/details/pa4gold02" target="_blank" rel="noopener">Source : archive.org</a></p>
       </section>
       <section>
         <h3>Photos Print Artist</h3>
-        <p class="small">1 346 images JPG du même CD, reprises telles quelles : le catalogue du CD crédite les photos à Aztech New Media, Produktum, Digital Media Prod. et Tom Kelley Studios (poupées anciennes), les images victoriennes à The Gifted Line, les textiles à Digital Design Collect. et quelques dessins à Tracy Tattro. Les polices et les modèles de mise en page du CD ne sont pas repris.</p>
+        <p class="small">1 346 images JPG du même CD, reprises telles quelles : le catalogue et l'aide du CD créditent les photos à Aztech New Media, Produktum AB, Digital Media Productions et Tom Kelley Studios, les images victoriennes à The Gifted Line (John Grossman Collection of Antique Images), les textiles à The Digital Design Collection (The Meller Archive) et quelques dessins à Tracey Tatro (« Tracy Tattro » dans le catalogue). Les polices et les modèles de mise en page du CD ne sont pas repris.</p>
       </section>
       <section>
         <h3>Photo Artist</h3>
@@ -224,6 +234,7 @@
       <li><time datetime="2026-11-02">2 novembre</time> Une galerie du jour qui suit le calendrier, des sélections thématiques et les premiers articles sur l'histoire du clip art. Les 964 dossiers des CD sont regroupés en une cinquantaine de thèmes généraux, les 1 026 images en double sont retirées, et la fiche permet de faire pivoter un dessin.</li>
       <li><time datetime="2026-11-03">3 novembre</time> Openclipart rejoint la Cliparthèque : 180 922 dessins du domaine public, avec le nom de leur auteur. Le calendrier compte désormais trente rendez-vous, de la galette des rois à la Saint-Nicolas, et les articles se retrouvent sous le titre « Autour des cliparts ».</li>
       <li><time datetime="2026-11-03">Le même jour</time> Deux nouveaux CD : les cliparts de Microsoft Office 97, et Print Artist Gold de Sierra, dont les dessins vectoriels sortent pour la première fois de leur format d'origine, avec ses photos et les images de Photo Artist.</li>
+      <li><time datetime="2026-11-03">Le même jour</time> Print Artist retrouve son menu d'origine : ses catégories, son ordre alphabétique et sa fenêtre « Graphics Grabber ».</li>
     </ol>
   </div>
 </dialog>
@@ -247,6 +258,32 @@
       <div class="tp-grid" id="tp-grid"></div>
       <button class="btn small" id="tp-more" type="button">Afficher plus</button>
     </aside>
+  </div>
+</dialog>
+
+<dialog class="sheet grabber" id="grabber" aria-labelledby="gg-title">
+  <div class="gg-head">
+    <div><h2 id="gg-title"></h2><p class="small" id="gg-sub"></p></div>
+    <button class="btn icon" type="button" data-close aria-label="Fermer"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="gg-body">
+    <div class="gg-col">
+      <label for="gg-q">Type Search Text:</label>
+      <input class="theme-filter" id="gg-q" type="search" autocomplete="off">
+      <label for="gg-cats">Categories:</label>
+      <select id="gg-cats" size="10"></select>
+    </div>
+    <div class="gg-col">
+      <label for="gg-list">Graphics: <span id="gg-n"></span></label>
+      <select id="gg-list" size="10"></select>
+    </div>
+    <div class="gg-col gg-prev">
+      <div class="gg-img"><img id="gg-img" alt=""></div>
+      <strong id="gg-name"></strong>
+      <p class="small" id="gg-meta"></p>
+      <button class="btn primary" id="gg-open" type="button">Voir la fiche</button>
+      <button class="btn" id="gg-grid" type="button">Afficher dans la grille</button>
+    </div>
   </div>
 </dialog>
 

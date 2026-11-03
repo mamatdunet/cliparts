@@ -23,6 +23,12 @@
   let results = [];
   const state = { q: '', c: '', t: -1, s: -1, d: -1, fav: false, sel: '', a: '', seed: 0, photos: store.get('photos', true) !== false, bg: store.get('bg', 'white'), size: store.get('size', 148), adult: store.get('adult', false) === true };
   const favs = new Set(store.get('favs', []));
+  // Menus d'origine : le classement du logiciel d'époque, chargé au choix de la collection (data/menus/, produit par les scripts d'import)
+  const MENUS = { printartist: 'printartist', paphotos: 'printartist' };
+  const menuCache = new Map();
+  let curMenu = null, menuCounts = [];
+  state.m = '';
+  state.origine = store.get('origine', true) !== false;
 
   const grid = $('#grid');
   const rendered = new Map();
@@ -94,6 +100,8 @@
     state.s = rub && rub.subs[+p.get('s')] ? +p.get('s') : -1;
     subFor = state.t;
     state.d = th ? th.i : -1;
+    state.m = p.get('m') || '';
+    if (state.m) state.origine = true;
     state.fav = p.get('fav') === '1';
     state.sel = SEL.has(p.get('sel')) ? p.get('sel') : '';
     state.a = ART.has(p.get('a')) || p.get('a') === 'sommaire' ? p.get('a') : '';
@@ -107,6 +115,7 @@
     if (state.t >= 0) p.set('t', RUBS[state.t].slug);
     if (state.s >= 0) p.set('s', state.s);
     if (state.d >= 0) p.set('d', THEMES[state.d].key);
+    if (state.m) p.set('m', state.m);
     if (state.fav) p.set('fav', '1');
     if (state.sel) p.set('sel', state.sel);
     if (state.a) p.set('a', state.a);
@@ -144,8 +153,35 @@
     const ws = (it.ws ||= new Set(it.hay.split(' ')));
     return sub.words.some((w) => ws.has(w) || ws.has(w + 's') || ws.has(w + 'x'));
   }
+  function getMenu(c) {
+    const id = MENUS[c];
+    if (!id) return null;
+    if (!menuCache.has(id)) {
+      menuCache.set(id, null);
+      fetch(`data/menus/${id}.json`).then((r) => r.json()).then((m) => { menuCache.set(id, prepareMenu(m)); update(); }).catch(() => {});
+    }
+    return menuCache.get(id);
+  }
+  // Les images du menu y sont dans l'ordre alphabétique du logiciel ; celles que le site n'a pas gardées (doublons) tombent
+  function prepareMenu(m) {
+    const ids = new Map();
+    for (const it of ITEMS) if (m.collections.includes(THEMES[it.t].c)) ids.set(THEMES[it.t].c + '/' + it.n, it.i);
+    const rangs = m.images.map(([c, n]) => ids.get(m.collections[c] + '/' + n) ?? -1);
+    m.ids = rangs.filter((i) => i >= 0);
+    m.rank = new Map(m.ids.map((i, r) => [i, r]));
+    for (const cat of m.categories) {
+      cat.ids = cat.images.map((r) => rangs[r]).filter((i) => i >= 0);
+      cat.set = new Set(cat.ids);
+    }
+    m.categories = m.categories.filter((cat) => cat.ids.length);
+    return m;
+  }
   function update() {
     if (state.t !== subFor) { state.s = -1; subFor = state.t; } // le sous-thème ne survit pas à un changement de rubrique
+    const M = state.origine && state.t < 0 && state.d < 0 && !state.fav && !state.sel ? getMenu(state.c) : null;
+    const cat = M && M.categories.find((x) => x.nom === state.m);
+    if ((M && !cat) || !MENUS[state.c] || state.t >= 0 || state.d >= 0) state.m = '';
+    const dansMenu = M && new Uint8Array(ITEMS.length);
     const subs = state.t >= 0 ? RUBS[state.t].subs : [];
     const bySub = new Uint32Array(subs.length);
     let photosHere = 0, inRub = 0;
@@ -179,6 +215,11 @@
       byColl['']++; byColl[th.c]++;
       if (state.c && th.c !== state.c) continue;
       if (state.d >= 0 && it.t !== state.d) continue;
+      if (M) {
+        if (!M.rank.has(it.i)) continue;
+        dansMenu[it.i] = 1;
+        if (cat && !cat.set.has(it.i)) continue;
+      }
       byTheme[th.r]++;
       if (state.t >= 0 && th.r !== state.t) continue;
       inRub++;
@@ -188,11 +229,12 @@
       scores[it.i] = sc;
       out.push(it.i);
     }
-    const home = !toks.length && state.t < 0 && state.d < 0 && !state.fav && !state.sel;
+    const home = !M && !toks.length && state.t < 0 && state.d < 0 && !state.fav && !state.sel;
     const seed = state.seed || (home || state.sel ? dailySeed() : 0);
     if (seed) shuffle(out, seed);
     // À l'accueil, les 28 000 boutons et puces passent après les dessins et les photos
-    if (home && !state.seed && !state.c) out.sort((a, b) => LAST.has(THEMES[ITEMS[a].t].c) - LAST.has(THEMES[ITEMS[b].t].c));
+    if (M && !state.seed) out.sort((a, b) => M.rank.get(a) - M.rank.get(b));
+    else if (home && !state.seed && !state.c) out.sort((a, b) => LAST.has(THEMES[ITEMS[a].t].c) - LAST.has(THEMES[ITEMS[b].t].c));
     else if (toks.length) out.sort((a, b) => scores[b] - scores[a] || a - b);
     results = out;
 
@@ -200,6 +242,9 @@
     $('#count').innerHTML = `${fmt(n)} <span>image${n > 1 ? 's' : ''}</span>`;
     $('#empty').hidden = n > 0;
     renderColls(byColl);
+    curMenu = M;
+    menuCounts = M ? M.categories.map((x) => x.ids.reduce((n, i) => n + dansMenu[i], 0)) : [];
+    renderLetters(out);
     renderThemes(byTheme, toks.length > 0 || state.fav);
     renderChips();
     renderSubs(subs, bySub, inRub);
@@ -226,6 +271,7 @@
   $('#colls').addEventListener('click', (e) => {
     const b = e.target.closest('.coll'); if (!b) return;
     state.c = b.dataset.c;
+    state.m = '';
     if (state.d >= 0 && state.c && THEMES[state.d].c !== state.c) state.d = -1;
     update(); scrollTop();
   });
@@ -233,7 +279,19 @@
   let themeCounts = null, themeFiltered = false;
   function renderThemes(counts, filtered) {
     themeCounts = counts; themeFiltered = filtered;
-    const f = norm($('#theme-filter').value.trim());
+    const f = norm($('#theme-filter').value.trim()), M = curMenu;
+    $('#menu-switch').hidden = !MENUS[state.c];
+    for (const b of $('#menu-switch').children) b.setAttribute('aria-checked', (b.dataset.o === '1') === !!M);
+    $('#side-title').textContent = M ? 'Categories' : 'Thèmes';
+    $('#themes-all').hidden = !!M; $('#grabber-open').hidden = !M;
+    $('#menu-note').hidden = !M;
+    $('#theme-filter').placeholder = M ? 'Filtrer les catégories…' : 'Filtrer les thèmes…';
+    if (M) {
+      $('#menu-note').textContent = `Le classement de ${M.logiciel}, avec ses noms anglais et son ordre alphabétique.`;
+      $('#themes').innerHTML = M.categories.map((x, k) => [x, menuCounts[k]]).filter(([x, n]) => (n || x.nom === state.m) && (!f || norm(x.nom).includes(f))).map(([x, n]) =>
+        `<li><button type="button" data-m="${esc(x.nom)}" aria-pressed="${state.m === x.nom}"><span>${esc(x.nom)}${x.editeur ? `<small>${esc(x.editeur)}</small>` : ''}</span><span class="n">${fmt(n)}</span></button></li>`).join('') || '<li class="grp">Aucune catégorie</li>';
+      return;
+    }
     let html = '';
     for (const r of RUBS) {
       const n = counts[r.i];
@@ -244,6 +302,13 @@
     $('#themes').innerHTML = html || '<li class="grp">Aucun thème</li>';
   }
   $('#themes').addEventListener('click', (e) => {
+    const m = e.target.closest('button[data-m]');
+    if (m) {
+      state.m = state.m === m.dataset.m ? '' : m.dataset.m;
+      update(); scrollTop();
+      $('#side').classList.remove('open');
+      return;
+    }
     const b = e.target.closest('button[data-t]'); if (!b) return;
     const t = +b.dataset.t;
     state.t = state.t === t ? -1 : t;
@@ -252,6 +317,76 @@
     $('#side').classList.remove('open');
   });
   $('#theme-filter').addEventListener('input', () => themeCounts && renderThemes(themeCounts, themeFiltered));
+  $('#menu-switch').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-o]'); if (!b) return;
+    state.origine = b.dataset.o === '1';
+    store.set('origine', state.origine);
+    Object.assign(state, { m: '', t: -1, s: -1, d: -1 });
+    $('#theme-filter').value = '';
+    update(); scrollTop();
+  });
+
+  // Comme dans le logiciel, une lettre mène au début de cette lettre dans la liste
+  function renderLetters(out) {
+    const box = $('#letters');
+    box.hidden = !curMenu || !!state.seed || !out.length;
+    if (box.hidden) return;
+    const debut = {};
+    out.forEach((i, r) => { const c = ITEMS[i].nname[0] || '', k = c >= 'a' && c <= 'z' ? c.toUpperCase() : '#'; if (!(k in debut)) debut[k] = r; });
+    box.innerHTML = [...'#ABCDEFGHIJKLMNOPQRSTUVWXYZ'].map((k) => `<button type="button" data-r="${debut[k] ?? ''}"${k in debut ? '' : ' disabled'}>${k}</button>`).join('');
+  }
+  $('#letters').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-r]'); if (!b) return;
+    const haut = $('#letters').offsetHeight + 12 + parseFloat(getComputedStyle($('#letters')).top);
+    scrollTo({ top: grid.getBoundingClientRect().top + scrollY + Math.floor(+b.dataset.r / geo.cols) * geo.rowH - haut });
+  });
+
+  // ---------- La fenêtre du logiciel : recherche, catégories, liste des noms et aperçu ----------
+  const gg = $('#grabber');
+  const ggCat = () => curMenu.categories.find((x) => x.nom === $('#gg-cats').value);
+  function ggFill() {
+    const toks = norm($('#gg-q').value).split(/[^a-z0-9]+/).filter(Boolean), cat = ggCat();
+    const ids = (cat ? cat.ids : curMenu.ids).filter((i) => visible(i) && toks.every((t) => ITEMS[i].hay.includes(t)));
+    const list = $('#gg-list'), avant = +list.value;
+    list.innerHTML = ids.map((i) => `<option value="${i}">${esc(ITEMS[i].name)}</option>`).join('');
+    $('#gg-n').textContent = fmt(ids.length);
+    list.value = ids.includes(avant) ? avant : ids[0] ?? '';
+    ggShow();
+  }
+  function ggShow() {
+    const v = $('#gg-list').value, it = v === '' ? null : ITEMS[+v];
+    $('#gg-open').disabled = !it;
+    $('#gg-img').hidden = !it;
+    if (it) $('#gg-img').src = it.path;
+    $('#gg-name').textContent = it ? it.name : 'Aucune image';
+    const cats = it ? curMenu.categories.filter((x) => x.set.has(it.i)) : [];
+    $('#gg-meta').textContent = cats.map((x) => x.nom).join(', ') + (cats.some((x) => x.nom.includes('(P)')) ? ". (P) : usage commercial interdit sans licence spéciale, d'après l'aide du logiciel." : '');
+  }
+  $('#grabber-open').addEventListener('click', () => {
+    $('#gg-title').textContent = curMenu.fenetre;
+    $('#gg-sub').textContent = curMenu.logiciel;
+    $('#gg-cats').innerHTML = '<option value="">(All)</option>' + curMenu.categories.map((x) => `<option value="${esc(x.nom)}">${esc(x.nom)}</option>`).join('');
+    $('#gg-cats').value = state.m;
+    $('#gg-q').value = state.q;
+    ggFill();
+    gg.showModal();
+    $('#gg-q').focus();
+    $('#side').classList.remove('open');
+  });
+  $('#gg-q').addEventListener('input', ggFill);
+  $('#gg-cats').addEventListener('change', ggFill);
+  $('#gg-list').addEventListener('change', ggShow);
+  const ggOpen = () => { if ($('#gg-list').value !== '') openDetail(+$('#gg-list').value); };
+  $('#gg-open').addEventListener('click', ggOpen);
+  $('#gg-list').addEventListener('dblclick', ggOpen);
+  $('#gg-list').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); ggOpen(); } });
+  $('#gg-grid').addEventListener('click', () => {
+    const cat = ggCat(), autre = curMenu.collections.find((c) => c !== state.c);
+    const c = !cat || cat.ids.some((i) => THEMES[ITEMS[i].t].c === state.c) ? state.c : autre;
+    Object.assign(state, { c, m: cat ? cat.nom : '', q: $('#gg-q').value, seed: 0 });
+    $('#q').value = state.q;
+    gg.close(); update(); scrollTop();
+  });
 
   // Collections repliables : repliées, seule la collection choisie reste visible
   function foldColls(open) {
@@ -348,6 +483,7 @@
     const chips = [];
     if (state.t >= 0) chips.push(['t', RUBS[state.t].nom]);
     if (state.d >= 0) chips.push(['d', 'Dossier : ' + THEMES[state.d].nom]);
+    if (state.m) chips.push(['m', esc(state.m)]);
     if (state.sel) chips.push(['sel', SEL.get(state.sel).titre]);
     if (state.fav) chips.push(['fav', 'Favoris']);
     if (state.seed) chips.push(['mix', 'Mélangé']);
@@ -367,7 +503,7 @@
   });
   $('#active').addEventListener('click', (e) => {
     const b = e.target.closest('.chip'); if (!b) return;
-    ({ t: () => (state.t = -1), d: () => (state.d = -1), sel: () => (state.sel = ''), fav: () => (state.fav = false), mix: () => (state.seed = 0) })[b.dataset.k]();
+    ({ t: () => (state.t = -1), d: () => (state.d = -1), m: () => (state.m = ''), sel: () => (state.sel = ''), fav: () => (state.fav = false), mix: () => (state.seed = 0) })[b.dataset.k]();
     update();
   });
 
