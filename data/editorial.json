@@ -39,7 +39,7 @@
     {
       "id": "poisson-d-avril", "titre": "Poisson d'avril", "quand": ["03-29/04-01"],
       "texte": "Pour la farce du 1er avril, il fallait un poisson à découper et à accrocher dans un dos. En voici quelques centaines.",
-      "regles": [{ "q": "poisson d'avril" }, { "t": "imsi:poissons" }, { "t": "masterclips:*", "q": "fish" }, { "t": "pro:nature", "q": "poisson" }]
+      "regles": [{ "q": "poisson d'avril" }, { "t": "imsi:poissons" }, { "t": "masterclips:*", "q": "fish" }, { "t": "pro:nature*", "q": "poisson" }]
     },
     {
       "id": "paques", "titre": "Joyeuses Pâques", "quand": ["paques-7/paques+1"],
@@ -54,7 +54,7 @@
     {
       "id": "fete-du-travail", "titre": "Fête du travail", "quand": ["04-28/05-01"],
       "texte": "Le 1er mai, place aux métiers : boulangers, plombiers, médecins et secrétaires tels que les dessinaient les illustrateurs des années 90.",
-      "regles": [{ "q": "1er mai" }, { "t": "pro:metiers" }, { "t": "masterclips:metiers*" }, { "t": "imsi:ouvriers" }]
+      "regles": [{ "q": "1er mai" }, { "t": "pro:metiers*" }, { "t": "masterclips:metiers*" }, { "t": "imsi:ouvriers" }]
     },
     {
       "id": "fete-des-meres", "titre": "Fête des mères", "quand": ["meres-6/meres"],

@@ -120,14 +120,184 @@ def norm(s):
     return re.sub(r"[’'\s]+", ' ', s).strip()
 
 
+# Cliparts Pro n'a que 8 dossiers très larges (« Nature & animaux » mêle fruits, météo et animaux) : ses 1 000 sujets
+# nommés vont un à un dans leur rubrique. Seuls les sujets qui ne vont pas dans la rubrique de leur dossier sont listés.
+PRO_SUJETS = {
+    'cuisine': "Ananas|Banane|Cerises|Citron|Maïs|Orange|Poire|Pommes|Raisins|Salade|Bière|Brochette de viande|Cafe|Chocolat|"
+               "Condiments|Cuisine chinoise|De la confiture|Des caramels|Des pâtes|Donuts|Fromage|Hamburguer|Hot dog|Ketchup|"
+               "Marshmellow|Pizza|Poulet rôti|Viande rotie|Dégustation|Boîte du goûter|Produit diététique|Glace|Chewing gum|"
+               "Tasse de thé|Restaurant|Barbecue|Plat|Couteau|Presse-fruits|Mixer|Cocktail|Champagne|Glacons",
+    'insectes-reptiles': "Araignee|Mouche|Papillon|Chasseur de papillons|Lézard|Serpent|Tortue|Insecticide|Chasse mouches",
+    'plantes-fleurs': "Arbre|Fleur|Graine|Plante carnivore|Planter un arbre|Rose|Semis|En arrosant des fleurs|Jardinnier",
+    'ciel-espace': "Arc en ciel|Arc-en-ciel|Coucher du soleil|De la pluie|Etoiles|Lune|Nuage|Orage electrique|Ouragan|Soleil|"
+                   "Systeme solaire|Terre|Vent|Neige|Comète|Soucoupe volante|Navette spatiale|Satellite|Vêtement pour la lune|"
+                   "Fusee spatiale|Vaisseau spatial|Astronaute|Extra terrestre|Temperature",
+    'fetes': "Automne|Ete|Hiver|Printemps|Feux d'artifice|Arbre de noël|Lapin de pâques|Nouvelle année|Fete|Saint nicolas|"
+             "Jour de la saint valentine",
+    'oiseaux': "Coq|Oiseau|Paon|Pigeon|Cigogne",
+    'paysages': "Desert|Jungle|Lagune|Montagne|Riviere|Tombée d'eau|Vague|Volcan|Inondation|Seisme|Place",
+    'prehistoire': "Dinosaure|Homme des cavernes",
+    'industrie': "Ecologie|Recyclage|Triage d'ordures|Recolte|Récolte|Usine|Moulin à vent|Usine d'energie|Haute tension|"
+                 "Moteur a essence|Chargeur frontal|Grue pour construire|Mélangeur de ciment|Machine|Electricite|Energie|Gaz|"
+                 "Structure metallique|Travailler la terre|Fermier",
+    'vie-marine': "Moule|Pieuvre|Poisson|Requin",
+    'animaux': "Chameau|Vache laitiere",
+    'loisirs': "Camping|Balancoire|Balançoire|Boomerang|Des dards|Jeu d'echecs|Jeu de cartes|Mots croisés|Patinette|Toupie|"
+               "Yo-yo|Glissoir|Trapéziste|Jeu vidéo|Joystick|Passe-temps|Ballon|Tresor|Bal|Tenue de plage|Binoculaires",
+    'panneaux': "Feux rouge|Feux vert|Arretez|Defendu|Interdit de fumer|Interdit de manger|Infraction de circulation|Sortie|Limite",
+    'symboles': "Fragile|Croix rouge",
+    'armee': "Tank de guerre|Canon|Dynamite|Missile|Masque à gas|Soldat|Bataille",
+    'fantasy': "Tapis volant|Démon|Fée|Lutin|Sorcier|Vampire|Nain|Super héros|Tarot|Clairvoyant",
+    'communication': "Timbre poste|Timbre-poste|Courrier|Boîte aux lettres|Adresse|Radio|Radio personnelle|Telephone|Téléphone|"
+                     "Telephone sans fil|Telecommunications|Televiseur|Télévision par cable|Machine de fax|"
+                     "Répondeur téléphonique|Haut parleurs|Syntoniser|Enregistreur video|Projecteur d'images|Journaliste|"
+                     "Speaker de radio|Caméraman|Publicite|Nouvelles|Publication",
+    'sciences': "Aimant|Atomique|Chimie|Science|Recherche|Telescope|Geologue",
+    'sante': "Radiographie|Rayons x|Médicaments|Dépistage médical|Croix rouge|Operation|Hôpital|Avoir de la fièvre|Mal au dos|"
+             "Mal aux dents|Mal à la tête|Tousser|Anesthésié|Hôpitalisé|Platré|Nettoyage dentaire|Orthodontie|"
+             "Rinçage pour la bouche|Sante|Aveugle|Surdité|Myope|Handicapé|Boiteux|Anti drogues|Déboucher le nez|Acupunture|"
+             "Chirurgien|Dentiste|Docteur|Médecin|Masseur",
+    'outils': "Boîte à outils|Perceuse|Scie électrique|Tournevis|Engrenages|Levier|Ciseaux|Hache|Pelle|Scie|Mètre à ruban|"
+              "Outils menagers|Corde|Canif|Brique|Boulons",
+    'calendrier': "Calendrier|Horloge|Horloge de sable|Réveil|Chronomètre à|Agenda|Etre en retard|Temps",
+    'maison': "Four microondes|Refrigerateur|Ventilateur|Casse noix|Ouvre boîtes|Machine à coudre|Linterne électrique|Banc",
+    'occasions': "Anniversaire|Marriage|Amour|Baiser|Fiançailles|Désillusion amoureuse",
+    'famille': "Bebe|Berceuse|Biberon|Famille|Etre enceinte|Naissance|Bonne d'enfants",
+    'architecture': "Capitole|Bâtiment|Pont|Rue|Cimetière|Escalier",
+    'religion': "Eglise|Ange|Prêtre|Priére|Confession|Meditation",
+    'voyages': "Paris|Touriste|Voyageur|Esquimau|Indien d'amérique|Mexicain",
+    'education': "Ecole|1 2 3.|A b c.|Alphabet|Crayon|Gomme a effacer|Regle|Papier|Livre|Des livres|Diplôme|"
+                 "Table de matières|Questionnaire|Connaissance|Professeur|Diplômé|Bibliothecaire|Formation",
+    'musique-spectacle': "Theatre|Cinema|Cassette musique|Disque musique|Musique|Microphone|Piano|Chanteur|Flûtiste|"
+                         "Joueur de guitarre|Joueur de harmonique|Joueur de jazz|Joueur de tambour|Joueur de trompette|"
+                         "Violiniste|Tambourineur|Directeur d'orchestre|Disc jockey|Acteur|Danseur|Ballet|Directeur de cinéma|"
+                         "Clown|Jongleur|Dompteur|Montreur de marionnettes|Magicien",
+    'societe': "Censure|Des lois|Justice|Emprisonne|Votation|Discours|Reglements|Explosion demographique|Pouvoir|Rotary club|"
+               "Greve|Chômage|Chômeur|Gouvernement|Avocat|Juge|Notaire|Policier|Politicien|President|Convict|"
+               "Evadé de la justice|Bandit|Enchainé|Puni|Coupable|Innocent",
+    'histoire': "Guillotine|Momie|Cowboy|Pirate|Roi|Aristocrate|Gondolier|Cocher|Calèche|Caravelle",
+    'cartes-drapeaux': "Carte géographique|Drapeau",
+    'vetements': "Chapeau|Cravatte|Des bas|Gant|Manteau|Pyjama|Souliers|Nouer des lacets des ch.|Lunettes|Bijoux|"
+                 "Vetements de sport|Deguisement|Encapuchonné",
+    'corps': "Les mains|Les pieds|Bouche|Derriere|Empreintes digitales",
+    'visages': "Visage|Portrait|Gros nez|Edenté",
+    'arts': "Photographie|Appareil photo|Développement photograph.|Artiste|Artiste célèbre|Peintre|Sculpteur|Potier|Designer",
+    'finance': "Argent|Actions|Bourse de valeurs|Carte de credit|Cheque|Monnaie|Emission de monnaie|Des pièces|Epargnes|Budget|"
+               "Dividende|Taux d'interet|Inflation|Blanchissage d'argent|Depenses|Endettement|Debiteur|Financement|"
+               "Liquidite monetaire|Index des actions|Faillite|Taxe|Caissier automatique|Portefeuille|Encaissement|"
+               "Excedents de caisse|Flux de caisse|Caisse|Prix|Prix de vente|Hausse de prix|Pouvoir d'achat|"
+               "Rentabilite de l'investissement|Reinvestissement|Capital de travail|Des coupons|Facture|Addition|Lotterie|Or|"
+               "Millionaire|Vendeur d'assurances",
+    'transports': "Péage|Parcmétre|Chauffeur de taxi|Mécanicien de voitures|Laver des voitures|Vente de voitures|"
+                  "Batterie automobile|Congestion|Pilote de course|Motocycliste",
+    'sports': "Arbitre|Lutteur|Cavalier|Toréro",
+}
+PRO = {}
+for _r, _noms in PRO_SUJETS.items():
+    for _n in _noms.split('|'):
+        PRO.setdefault(norm(_n), _r)
+
+# Sous-thèmes des grandes rubriques : une image y figure si l'un des mots (ou son pluriel en s ou x) est un mot de son
+# nom, de son dossier ou de ses mots-clés. Mots sans accents ; français et anglais, Openclipart étant en anglais.
+SOUS = {
+    'animaux': [
+        ('Chats', 'chat chaton cat kitten kitty felin feline'),
+        ('Chiens', 'chien chiot dog puppy caniche'),
+        ('Chevaux', 'cheval chevaux poney horse pony'),
+        ('Ferme', 'vache cochon porc mouton chevre ane cow pig sheep goat donkey lamb ferme farm bull taureau'),
+        ('Savane et jungle', 'lion tigre elephant girafe zebre singe gorille leopard rhinoceros hippopotame tiger giraffe zebra '
+                             'monkey gorilla rhino hippo cheetah'),
+        ('Forêt', 'ours renard loup cerf biche ecureuil herisson bear fox wolf deer squirrel hedgehog raccoon moose'),
+        ('Lapins et rongeurs', 'lapin souris rat hamster rabbit bunny mouse castor beaver'),
+    ],
+    'plantes-fleurs': [
+        ('Arbres', 'arbre tree palmier palm sapin pin oak chene'),
+        ('Fleurs', 'fleur flower rose tulipe tulip marguerite daisy tournesol sunflower bouquet lys lily'),
+        ('Feuilles', 'feuille leaf leaves'),
+        ('Champignons', 'champignon mushroom'),
+        ('Cactus et plantes grasses', 'cactus succulent'),
+    ],
+    'gens': [
+        ('Hommes', 'homme man men monsieur gentleman businessman'),
+        ('Femmes', 'femme woman women madame lady girl fille'),
+        ('Enfants', 'enfant child children kid kids boy garcon bebe baby gamin'),
+        ('Personnes âgées', 'vieux vieille elderly grandmother grandfather grand-mere grand-pere'),
+        ('Silhouettes', 'silhouette'),
+        ('Avatars', 'avatar'),
+    ],
+    'cuisine': [
+        ('Fruits', 'fruit pomme banane orange poire cerise raisin ananas fraise citron apple banana pear cherry grape pineapple '
+                   'strawberry lemon'),
+        ('Légumes', 'legume vegetable carotte tomate carrot tomato salade lettuce chou cabbage oignon onion'),
+        ('Boissons', 'boisson drink cafe coffee the tea biere beer vin wine cocktail jus juice'),
+        ('Desserts et sucreries', 'gateau dessert bonbon chocolat glace cake candy cookie biscuit tarte pie'),
+        ('Pain et fromage', 'pain fromage bread cheese croissant baguette'),
+        ('Plats', 'pizza hamburger sandwich pates spaghetti soupe soup plat meal'),
+        ('Ustensiles', 'couteau fourchette cuillere casserole poele knife fork spoon pan pot ustensile'),
+    ],
+    'symboles': [
+        ('Icônes', 'icone icon'),
+        ('Boutons', 'bouton button'),
+        ('Logos et emblèmes', 'logo emblem embleme badge'),
+        ('Formes', 'forme shape cercle circle carre square triangle hexagone hexagon etoile star'),
+    ],
+    'bordures': [
+        ('Cadres', 'cadre frame'),
+        ('Coins', 'coin corner'),
+        ('Frises et séparateurs', 'frise bordure border divider separateur'),
+        ('Ornements', 'ornement ornament flourish arabesque'),
+    ],
+    'transports': [
+        ('Voitures', 'voiture car auto automobile'),
+        ('Avions', 'avion plane airplane aircraft biplane jet'),
+        ('Bateaux', 'bateau boat ship navire voilier sailboat'),
+        ('Trains', 'train locomotive tram metro'),
+        ('Vélos et motos', 'velo bicyclette bicycle bike moto motocyclette motorcycle scooter'),
+        ('Camions et bus', 'camion truck bus autobus'),
+    ],
+    'fetes': [
+        ('Noël', 'noel christmas xmas santa sapin'),
+        ('Halloween', 'halloween citrouille pumpkin sorciere witch'),
+        ('Pâques', 'paques easter'),
+        ('Saint-Valentin', 'valentin valentine'),
+        ('Saisons', 'printemps ete automne hiver spring summer autumn winter saisons'),
+    ],
+    'fonds': [
+        ('Motifs', 'motif pattern seamless'),
+        ('Textures', 'texture'),
+        ('Dégradés', 'degrade gradient'),
+        ('Abstraits', 'abstrait abstract'),
+    ],
+    'cartes-drapeaux': [
+        ('Drapeaux', 'drapeau flag'),
+        ('Cartes', 'carte map'),
+        ('Globes', 'globe'),
+    ],
+    'sports': [
+        ('Football', 'football soccer'),
+        ('Basket', 'basket basketball'),
+        ('Tennis', 'tennis'),
+        ('Vélo', 'velo bicyclette bicycle bike cycling cyclist'),
+        ('Sports d\'hiver', 'ski skieur patin skating snowboard luge'),
+        ('Natation et plongée', 'natation nageur swimming swimmer plongee diving'),
+        ('Golf', 'golf'),
+    ],
+    'oiseaux': [
+        ('Basse-cour', 'poule coq poussin canard oie dindon chicken hen rooster chick duck goose turkey'),
+        ('Rapaces', 'aigle hibou chouette faucon eagle owl hawk falcon vulture'),
+        ('Oiseaux exotiques', 'perroquet toucan flamant paon parrot toucan flamingo peacock tropicaux'),
+        ('Oiseaux marins', 'mouette pelican pingouin manchot seagull pelican penguin'),
+    ],
+}
+
 SLUGS = [s for s, _ in RUBRIQUES]
 _rx = [(re.compile(p), SLUGS.index(r)) for p, r in REGLES]
 
 
 def rubrique(coll, dossier, nom):
     """Indice de la rubrique d'un dossier, ou None s'il n'est pas classé."""
-    if coll == 'openclipart':  # dessins déjà rangés par rubrique (tools/build_openclipart.py)
-        return SLUGS.index(dossier)
+    if coll == 'openclipart':  # dessins déjà rangés par rubrique, « dossier.rubrique » s'ils ont changé (build_openclipart.py)
+        return SLUGS.index(dossier.split('.')[-1])
     key = f'{coll}:{norm(nom)}'
     for rx, i in _rx:
         if rx.search(key) or rx.search(f'{coll}:{dossier}'):

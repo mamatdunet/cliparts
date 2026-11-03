@@ -37,7 +37,7 @@ collections = [
      'source': 'https://archive.org/details/IMSI_Masterclips_35000_ClipArts_1996Win31Eng', 'ext': 'jpg'},
 ]
 if oclip:
-    collections.append({'id': 'openclipart', 'nom': 'Openclipart', 'annee': 2004, 'editeur': 'Openclipart, domaine public (CC0)',
+    collections.append({'id': 'openclipart', 'nom': 'Openclipart', 'editeur': 'Openclipart, domaine public (CC0)',  # sans année : alimenté depuis 2004
                         'source': 'https://openclipart.org/', 'ext': 'svg'})
     # Les dessins sont servis depuis Vercel Blob (tools/upload_openclipart.mjs), trop nombreux pour un déploiement
     bp = os.path.join(root, 'cliparts/openclipart/blob.json')
@@ -135,7 +135,7 @@ cache_p = os.path.join(root, 'cliparts/_md5.json')
 cache = json.load(open(cache_p)) if os.path.exists(cache_p) else {}
 def digest(it):
     c = collections[themes[it[0]][0]]
-    rel = f"{c['id']}/{themes[it[0]][1]}/{it[1]}.{c['ext']}"
+    rel = f"{c['id']}/{themes[it[0]][1].split('.')[0]}/{it[1]}.{c['ext']}"
     st = os.stat(os.path.join(root, 'cliparts', rel))
     sig = f'{st.st_size}:{int(st.st_mtime)}'
     if rel not in cache or cache[rel][0] != sig:
@@ -167,7 +167,38 @@ for th in themes:
     r = rubrique(collections[th[0]]['id'], th[1], th[2])
     assert r is not None, th
     th.append(r)
-out = {'v': 2, 'collections': collections, 'persos': pro['persos'], 'rubriques': [list(r) for r in RUBRIQUES],
+# Cliparts Pro : chaque sujet va dans sa rubrique (rubriques.PRO). Un dossier réparti entre plusieurs rubriques donne
+# un thème par rubrique, « dossier.rubrique », dont le 5e champ garde le dossier des fichiers.
+from rubriques import PRO, SLUGS, norm as rnorm
+part = {}
+for it in items:
+    th = themes[it[0]]
+    if collections[th[0]]['id'] != 'pro' or rnorm(it[2]) not in PRO: continue
+    r = SLUGS.index(PRO[rnorm(it[2])])
+    if r == th[3]: continue
+    if (it[0], r) not in part:
+        part[it[0], r] = len(themes)
+        themes.append([th[0], f'{th[1]}.{SLUGS[r]}', th[2], r, th[1]])
+    it[0] = part[it[0], r]
+# Openclipart : un dessin reclassé depuis son téléchargement (thème « dossier.rubrique ») garde son fichier ; il rejoint
+# le thème de sa rubrique et son dossier passe dans le nom de fichier (« dossier/numéro »)
+oc = next((i for i, c in enumerate(collections) if c['id'] == 'openclipart'), None)
+if oc is not None:
+    pure = {th[1]: i for i, th in enumerate(themes) if th[0] == oc and '.' not in th[1]}
+    for it in items:
+        th = themes[it[0]]
+        if th[0] != oc or '.' not in th[1]: continue
+        d, r = th[1].split('.')
+        if r not in pure:
+            pure[r] = len(themes); themes.append([oc, r, th[2], th[3]])
+        it[0], it[1] = pure[r], f'{d}/{it[1]}'
+    used = sorted({it[0] for it in items})
+    renum = {old: new for new, old in enumerate(used)}
+    themes = [themes[i] for i in used]
+    for it in items: it[0] = renum[it[0]]
+from rubriques import SOUS
+out = {'v': 2, 'collections': collections, 'persos': pro['persos'],
+       'rubriques': [[r, nom] + ([SOUS[r]] if r in SOUS else []) for r, nom in RUBRIQUES],
        'themes': themes, 'items': items, 'adult': adult}
 if oclip:
     out['auteurs'] = list(auteurs)

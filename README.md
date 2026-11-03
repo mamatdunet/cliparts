@@ -30,8 +30,9 @@ Ce que fait le site :
 
 - recherche instantanée sans accents ni majuscules (nom, thème, personnage, collection, mots-clés) ;
 - filtres par collection (liste repliable) et par thème, avec le nombre de résultats. Les 964 dossiers des CD sont
-  regroupés en 57 thèmes généraux (`tools/rubriques.py`) ; le nom du dossier reste un mot-clé de recherche et un filtre
-  depuis la fiche d'une image ; un bouton masque ou affiche les photos ; « Tout voir » ouvre tous les
+  regroupés en 57 thèmes généraux (`tools/rubriques.py`), les sujets de Cliparts Pro un par un (`PRO_SUJETS`) ; le nom
+  du dossier reste un mot-clé de recherche et un filtre depuis la fiche d'une image. Les grandes rubriques ont des
+  sous-thèmes (Chats, Chiens, Fruits…, `SOUS`) ; un bouton masque ou affiche les photos, quand il y en a ; « Tout voir » ouvre tous les
   thèmes en grand, avec une vignette chacun et l'aperçu du thème choisi dans une colonne ;
 - grille virtualisée : seules les vignettes visibles sont dans la page, même pour 337 000 images ;
 - taille des vignettes réglable, fond blanc, damier ou sombre ;

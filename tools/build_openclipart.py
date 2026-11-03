@@ -5,7 +5,7 @@ Usage : python3 tools/build_openclipart.py [--max N] [--parallele 8] [--pause 0]
 2. Pour chaque dessin : la page du dessin (tags, auteur, « Safe for Work ? »), puis le SVG, nettoyé
    (scripts, liens externes et données d'éditeur retirés) et rangé dans le dossier de sa rubrique :
    cliparts/openclipart/<rubrique>/<id>.svg. La rubrique se déduit des tags anglais (TAGS ci-dessous).
-3. catalog.json est réécrit ; un dessin dont la rubrique a changé (TAGS modifié) est déplacé.
+3. catalog.json est réécrit ; un dessin dont la rubrique a changé (TAGS modifié) garde son fichier et son dossier.
 
 Deux requêtes par dessin, sur --parallele connexions à la fois (8 par défaut, pour ne pas surcharger ce petit site
 bénévole) ; --pause N espace en plus les requêtes de N secondes. Si le site répond « trop de requêtes » (429) ou se
@@ -27,62 +27,66 @@ FR = json.load(open(os.path.join(root, 'tools/imsi_fr.json')))['keywords']
 
 # Tags anglais → rubrique. Chaque tag qui figure dans une liste donne deux points à la rubrique, chaque mot du titre
 # un point ; la mieux notée l'emporte, la première de la liste en cas d'égalité ; sans point : « divers ».
-# Un mot présent dans deux listes compte pour la première.
+# Un mot présent dans deux listes compte pour la première. Les fêtes passent avant les sujets (« Easter bunny »).
 TAGS = {
     'humour': 'comic comics caricature funny humor humour joke meme smiley emoji emoticon mascot',
-    'prehistoire': 'dinosaur dinosaurs dino prehistoric fossil mammoth caveman trex t-rex',
-    'oiseaux': 'bird birds owl eagle parrot duck chicken hen rooster penguin swan crow raven pigeon dove sparrow robin flamingo',
-    'vie-marine': 'fish fishes shark whale dolphin octopus crab jellyfish seahorse marine sea-life underwater coral shell seashell lobster',
-    'insectes-reptiles': 'insect insects bug bugs butterfly bee ant spider ladybug ladybird dragonfly snake reptile lizard turtle frog crocodile beetle amphibian salamander',
-    'animaux': 'animal animals cat cats kitten dog dogs puppy horse cow pig sheep goat rabbit bunny mouse rat bear lion tiger elephant '
-               'giraffe monkey fox wolf deer zebra squirrel pet pets mammal wildlife hedgehog panda',
-    'plantes-fleurs': 'flower flowers plant plants tree trees leaf leaves rose tulip garden botanical floral flora grass mushroom cactus '
-                      'vegetation forest bush daisy sunflower',
-    'ciel-espace': 'space planet planets star moon sun sky cloud clouds weather rain snow snowflake rocket astronaut galaxy comet storm rainbow',
-    'paysages': 'landscape nature mountain mountains river lake beach island desert scenery sunset waterfall volcano hill',
-    'cartes-drapeaux': 'map maps flag flags country globe world continent geography atlas',
-    'architecture': 'building buildings house home architecture castle church tower bridge city skyline city skyscraper temple ruins',
-    'voyages': 'travel tourism vacation holiday luggage suitcase hotel landmark',
     'fetes': 'christmas xmas santa halloween pumpkin easter valentine valentines thanksgiving hanukkah party celebration '
              'fireworks new-year carnival autumn spring winter summer',
     'occasions': 'love heart hearts wedding birthday anniversary gift present cake baby-shower',
+    'prehistoire': 'dinosaur dinosaurs dino prehistoric fossil mammoth caveman trex t-rex',
+    'oiseaux': 'bird birds owl eagle parrot duck chicken hen rooster penguin swan crow raven pigeon dove sparrow robin flamingo '
+               'pelican stork heron peacock turkey goose hummingbird woodpecker ostrich seagull toucan kingfisher finch hawk falcon '
+               'vulture cockatoo budgie canary chick',
+    'vie-marine': 'fish fishes shark whale dolphin octopus crab jellyfish seahorse marine sea-life underwater coral shell seashell lobster',
+    'insectes-reptiles': 'insect insects bug bugs butterfly bee ant spider ladybug ladybird dragonfly snake reptile lizard turtle frog crocodile beetle amphibian salamander',
+    'animaux': 'animal animals cat cats kitten dog dogs puppy horse cow pig sheep goat rabbit bunny mouse rat bear lion tiger elephant '
+               'giraffe monkey fox wolf deer zebra squirrel pet pets mammal wildlife hedgehog panda cattle ox bull donkey camel kangaroo '
+               'koala raccoon otter beaver moose leopard cheetah hippo rhino gorilla sloth llama alpaca hamster lamb calf pony',
+    'plantes-fleurs': 'flower flowers plant plants tree trees leaf leaves rose tulip garden botanical floral flora grass mushroom cactus '
+                      'vegetation forest bush daisy sunflower',
+    'ciel-espace': 'space planet planets star moon sun sky cloud clouds weather rain snow snowflake rocket astronaut galaxy comet storm nasa ice',
+    'paysages': 'landscape nature mountain mountains river lake beach island desert scenery sunset waterfall volcano hill',
+    'cartes-drapeaux': 'map maps flag flags country globe continent geography atlas',
+    'architecture': 'building buildings house home architecture castle church tower bridge city skyline city skyscraper temple ruins',
+    'voyages': 'travel tourism vacation holiday luggage suitcase hotel landmark',
     'visages': 'face faces portrait head avatar profile',
     'famille': 'family child children kid kids baby boy girl mother father parents',
-    'gens': 'people person man woman men women silhouette human character',
+    'gens': 'people person man woman men women human',
     'metiers': 'job jobs work worker profession police firefighter doctor nurse chef farmer builder occupation',
-    'bureau': 'office business businessman meeting desk shop store commerce marketing',
+    'bureau': 'office business businessman meeting desk shop store commerce marketing chart',
     'finance': 'money finance dollar euro coin coins bank cash currency bitcoin',
     'informatique': 'computer computers technology tech internet network electronics phone smartphone robot laptop keyboard mouse-pointer software hardware disk hard-drive server',
-    'communication': 'communication media television tv radio newspaper camera film movie mail envelope book books',
+    'communication': 'communication media television tv radio newspaper camera film movie mail envelope book books email e-mail stamp',
     'sciences': 'science chemistry physics biology laboratory lab atom molecule microscope math mathematics geometry fraction',
     'sante': 'medical medicine health hospital pill pills virus covid doctor-bag first-aid dental tooth',
     'corps': 'body anatomy hand hands eye eyes skeleton skull brain foot',
     'cuisine': 'food fruit fruits vegetable vegetables drink drinks kitchen cooking meal coffee tea beer wine bread cheese apple '
                'pizza dessert candy breakfast cup',
-    'maison': 'furniture chair table lamp bed sofa household object objects appliance key bottle doll seal certificate',
+    'maison': 'furniture chair table lamp bed sofa household appliance key bottle doll seal certificate vase jar jug pot pottery vessel bathroom toilet candle bulb trash padlock lock window',
     'vetements': 'clothing clothes fashion dress shirt hat shoe shoes costume jewelry',
-    'outils': 'tool tools hammer wrench screwdriver saw axe ax hatchet construction diy hardware-tool',
-    'industrie': 'industry factory agriculture farm tractor energy recycling ecology environment oil',
-    'sports': 'sport sports football soccer basketball baseball tennis golf ball bike bicycle cycling running swimming ski fitness olympic',
-    'loisirs': 'game games toy toys play card cards chess puzzle dice hobby circus playing-card',
+    'outils': 'tool tools hammer wrench screwdriver saw axe ax hatchet construction diy hardware-tool gear',
+    'industrie': 'industry factory agriculture farm tractor energy recycling ecology environment oil electricity battery power electric',
+    'sports': 'sport sports football soccer basketball baseball tennis golf bike bicycle cycling running swimming ski fitness olympic trophy',
+    'loisirs': 'game games toy toys chess puzzle dice hobby circus playing-card teddy-bear teddy balloon kite',
     'musique-spectacle': 'music musical instrument guitar piano drum violin note notes theater theatre dance singer concert',
-    'arts': 'art painting artist paint drawing sketch sculpture museum design',
+    'arts': 'painting artist paint drawing sketch sculpture museum poster',
     'gravures': 'vintage engraving antique victorian woodcut etching old-book retro-illustration',
     'education': 'school education student teacher classroom university pencil learning',
-    'histoire': 'history historical medieval knight ancient egypt roman greek viking pirate',
-    'religion': 'religion religious christian cross angel bible church-symbol jesus islam jewish buddha',
+    'histoire': 'history historical medieval knight ancient egypt roman greek viking pirate heraldry shield crown',
+    'religion': 'religion religious christian angel bible church-symbol jesus islam jewish buddha crucifix',
     'armee': 'military army war weapon gun soldier tank sword',
-    'societe': 'politics government law justice protest election',
+    'societe': 'politics government law justice protest election politician',
     'transports': 'car cars vehicle vehicles truck bus train airplane plane aircraft aeroplane boat ship transport transportation '
                   'motorcycle helicopter traffic-vehicle',
     'panneaux': 'sign signs road-sign traffic warning safety hazard signage',
     'fleches': 'arrow arrows',
-    'symboles': 'icon icons symbol symbols pictogram button buttons shape shapes logo emblem badge',
+    'symboles': 'icon icons symbol symbols pictogram button buttons shape shapes logo emblem badge circle square triangle hexagon '
+                'spiral cube spirograph idea label',
     'bordures': 'border borders frame frames ornament ornaments decoration decorative divider corner flourish',
-    'fonds': 'background backgrounds pattern patterns texture seamless abstract wallpaper tile',
+    'fonds': 'background backgrounds pattern patterns texture seamless abstract wallpaper tile mandala fractal psychedelic',
     'lettres': 'letter letters alphabet font text typography number numbers word',
     'calendrier': 'calendar time clock clock-face date month',
-    'fantasy': 'fantasy dragon unicorn fairy monster magic wizard witch mythology alien zombie ghost',
+    'fantasy': 'fantasy dragon unicorn fairy monster magic wizard witch mythology alien zombie ghost creature',
 }
 SLUGS = [s for s, _ in RUBRIQUES]
 NOMS = dict(RUBRIQUES)
@@ -231,7 +235,8 @@ def alleger(rt):
 
 # ---------- Catalogue ----------
 def catalogue(liste, fiches):
-    """Range chaque SVG dans le dossier de sa rubrique (le déplace si elle a changé) et écrit catalog.json."""
+    """Écrit catalog.json. Un SVG reste dans le dossier où il a été téléchargé (le même chemin dans Vercel Blob) :
+    si sa rubrique a changé depuis (TAGS modifié), son thème s'appelle « dossier.rubrique »."""
     ici = {}
     for d in os.listdir(dst) if os.path.isdir(dst) else []:
         if os.path.isdir(os.path.join(dst, d)):
@@ -243,23 +248,22 @@ def catalogue(liste, fiches):
         if not fi or id not in ici: continue
         r = rubrique(fi['tags'], titre)
         if ici[id] != r:
-            os.makedirs(os.path.join(dst, r), exist_ok=True)
-            os.replace(os.path.join(dst, ici[id], f'{id}.svg'), os.path.join(dst, r, f'{id}.svg'))
             moved += 1
-        themes.setdefault(r, NOMS[r])
+        t = r if ici[id] == r else f'{ici[id]}.{r}'
+        themes.setdefault(t, NOMS[r])
         # Mots-clés : tags anglais, leur traduction quand tools/imsi_fr.json la connaît, et l'auteur
         words = []
         for w in [FR.get(x, '') for x in fi['tags']] + fi['tags'] + [fi['auteur']]:
             for x in w.lower().split():
                 if x not in words: words.append(x)
-        items.append([r, str(id), titre, ' '.join(words), fi['auteur']] + ([1] if fi['nsfw'] else []))
-    order = sorted(themes, key=SLUGS.index)
+        items.append([t, str(id), titre, ' '.join(words), fi['auteur']] + ([1] if fi['nsfw'] else []))
+    order = sorted(themes, key=lambda t: (SLUGS.index(t.split('.')[-1]), t))
     tidx = {k: i for i, k in enumerate(order)}
     json.dump({'source': 'Openclipart (openclipart.org), dessins versés dans le domaine public (CC0 1.0)',
                'chemin': 'cliparts/openclipart/{dossier}/{n}.svg', 'themes': [[k, themes[k]] for k in order],
                'items': [[tidx[it[0]]] + it[1:] for it in items]},
               open(os.path.join(dst, 'catalog.json'), 'w'), ensure_ascii=False, separators=(',', ':'))
-    print('openclipart', len(items), 'dessins', len(order), 'rubriques', moved, 'déplacés',
+    print('openclipart', len(items), 'dessins', len(order), 'thèmes', moved, 'reclassés',
           sum(len(it) > 5 for it in items), 'réservés +18')
 
 

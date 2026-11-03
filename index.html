@@ -24,6 +24,7 @@
       <input id="q" type="search" placeholder="Chercher : chat, vélo, Noël…" autocomplete="off" spellcheck="false" aria-label="Rechercher">
       <kbd>/</kbd>
     </label>
+    <button class="btn icon search-btn" id="search-btn" type="button" aria-label="Rechercher"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
     <a class="btn ghost" id="journal-btn" href="#a=sommaire">Autour des cliparts</a>
     <button class="btn ghost" id="about-btn" type="button">Crédits</button>
   </div>
@@ -78,6 +79,7 @@
         </label>
       </div>
     </div>
+    <nav class="subs" id="subs" aria-label="Sous-thèmes" hidden></nav>
     <div class="grid" id="grid"></div>
     <div class="empty" id="empty" hidden>
       <p class="empty-title">Rien trouvé.</p>

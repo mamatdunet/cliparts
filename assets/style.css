@@ -90,6 +90,7 @@ button, input, select { font: inherit; color: inherit; }
   transition: box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 .search:focus-within { box-shadow: var(--shadow-pop-lg); transform: translate(-1px, -1px); }
+.search-btn { display: none; }  /* la loupe seule, sur mobile */
 .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font-size: 17px; height: 100%; }
 .search input::-webkit-search-cancel-button { cursor: pointer; }
 .search kbd {
@@ -274,8 +275,9 @@ body[data-bg="dark"] .tile .pic, body[data-bg="dark"] .stage, body[data-bg="dark
   .tools { margin-left: 0; width: 100%; justify-content: space-between; }
   .size input { width: 72px; }
   .sheet-in { grid-template-columns: 1fr; }
-  .stage { min-height: 0; aspect-ratio: 4 / 3; padding: 24px 56px; border-right: 0; border-bottom: var(--stroke) solid var(--ink); }
-  .stage img { max-height: 100%; }
+  /* Une seule case de grille bornée à la hauteur du cadre : sinon l'image le déborde */
+  .stage { min-height: 0; aspect-ratio: 4 / 3; padding: 24px 56px; border-right: 0; border-bottom: var(--stroke) solid var(--ink); grid-template: minmax(0, 1fr) / minmax(0, 1fr); }
+  .stage img { max-height: 100%; min-height: 0; }
   .info h2 { font-size: 28px; }
   .hint { display: none; }
   .about-cols { grid-template-columns: 1fr; }
@@ -285,6 +287,12 @@ body[data-bg="dark"] .tile .pic, body[data-bg="dark"] .stage, body[data-bg="dark
   #fav-only, #shuffle { width: 34px; padding: 0; }
   #about-btn { font-size: 0; width: 40px; padding: 0; }
   #about-btn::before { content: "?"; font-size: 18px; }
+  /* Recherche repliée en loupe ; ouverte, elle prend toute la largeur de l'en-tête */
+  .search { display: none; }
+  .search-btn { display: inline-flex; margin-left: auto; }
+  .top.searching .search { display: flex; }
+  .top.searching :is(.brand, .search-btn, #journal-btn, #about-btn) { display: none; }
+  #journal-btn { margin-left: 0; }
   .sheet { width: calc(100vw - 16px); max-height: calc(100dvh - 16px); box-shadow: 4px 4px 0 var(--ink); }
 }
 
@@ -327,7 +335,7 @@ body[data-bg="dark"] .tile .pic, body[data-bg="dark"] .stage, body[data-bg="dark
 
 /* Éditorial : galerie du jour, sélections, journal */
 .edito { margin-bottom: 8px; }
-.edito-h { font-size: 26px; margin: 28px 0 12px; }
+.edito-h { font-size: 26px; margin: 28px 0 12px; scroll-margin-top: calc(var(--top-h) + 12px); }
 .today {
   display: grid; grid-template-columns: minmax(240px, 1fr) minmax(0, 1.6fr); gap: 20px; align-items: center;
   padding: 20px 22px; background: var(--yellow-100); border: var(--stroke) solid var(--ink); border-radius: var(--radius-lg); box-shadow: var(--shadow-pop-lg);
@@ -447,6 +455,19 @@ body[data-bg="dark"] .tile .pic, body[data-bg="dark"] .stage, body[data-bg="dark
 .tv-colls { grid-column: 1 / -1; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px 0 4px; }
 .tv-colls .chip { flex: none; padding: 0 12px; background: var(--surface-card); }
 .tv-colls .chip[aria-checked="true"] { background: var(--yellow); }
+/* Mots-clés d'un dessin Openclipart, dans la fiche */
+.kw-list { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; width: 100%; margin-top: 4px; }
+.kw-list .eyebrow { width: 100%; margin: 0; }
+.tag.kw { height: 24px; padding: 0 9px; font-size: 12px; font-weight: 500; border-color: var(--neutral-300); }
+/* Sous-thèmes d'une rubrique */
+.subs { display: flex; flex-wrap: wrap; gap: 6px; margin: -6px 0 18px; }
+.subs .chip { padding: 0 12px; background: var(--surface-card); }
+.subs .chip small { font-weight: 500; color: var(--text-muted); margin-left: 2px; }
+.subs .chip[aria-pressed="true"] { background: var(--yellow); }
+@media (max-width: 520px) {
+  .subs { flex-wrap: nowrap; overflow-x: auto; margin: -6px -16px 14px; padding: 2px 16px 6px; scrollbar-width: none; }
+  .subs .chip { flex: none; }
+}
 .tv-wrap { flex: 1; min-height: 0; display: flex; position: relative; }
 .tv-body { flex: 1; min-width: 0; overflow-y: auto; padding: 8px 20px 32px; }
 .tv-body h3 { display: flex; align-items: center; gap: 8px; font-size: 22px; margin: 18px 0 10px; }

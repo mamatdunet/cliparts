@@ -21,7 +21,7 @@
   let DB, ITEMS = [], THEMES = [], RUBS = [], VARIANTS = new Map(), BY_THEME = [], BY_RUB = [], EXT = {}, BASE = {}, ADULT = new Set(), BY_KEY = new Map();
   let EDITO = { selections: [], articles: [] }, SEL = new Map(), ART = new Map();
   let results = [];
-  const state = { q: '', c: '', t: -1, d: -1, fav: false, sel: '', a: '', seed: 0, photos: store.get('photos', true) !== false, bg: store.get('bg', 'white'), size: store.get('size', 148), adult: store.get('adult', false) === true };
+  const state = { q: '', c: '', t: -1, s: -1, d: -1, fav: false, sel: '', a: '', seed: 0, photos: store.get('photos', true) !== false, bg: store.get('bg', 'white'), size: store.get('size', 148), adult: store.get('adult', false) === true };
   const favs = new Set(store.get('favs', []));
 
   const grid = $('#grid');
@@ -41,19 +41,21 @@
     for (const a of EDITO.articles) ART.set(a.id, a);
     for (const c of db.collections) { EXT[c.id] = c.ext; BASE[c.id] = c.base || 'cliparts/'; }
     ADULT = new Set(db.adult || []);
-    RUBS = db.rubriques.map(([slug, nom], i) => ({ i, slug, nom, norm: norm(nom) }));
-    THEMES = db.themes.map(([c, slug, nom, r], i) => ({ i, c: db.collections[c].id, slug, nom, r, key: db.collections[c].id + ':' + slug, norm: norm(nom), total: 0 }));
+    RUBS = db.rubriques.map(([slug, nom, subs], i) => ({ i, slug, nom, norm: norm(nom), subs: (subs || []).map(([n, w]) => ({ nom: n, words: w.split(' ') })) }));
+    // dir : dossier des fichiers, quand un dossier du CD est réparti entre plusieurs rubriques (Cliparts Pro)
+    THEMES = db.themes.map(([c, slug, nom, r, dir], i) => ({ i, c: db.collections[c].id, slug, dir: dir || slug, nom, r, key: db.collections[c].id + ':' + slug, norm: norm(nom), total: 0 }));
     ITEMS = db.items.map(([t, f, nom, v, kw, a], i) => {
       const th = THEMES[t];
       th.total++;
       const perso = v ? db.persos[v.toUpperCase()] || '' : '';
       const name = nom ? nom.replace(/\.$/, '') : '';
       const label = name ? name + (perso ? ' · ' + perso : '') : th.nom;
-      const key = `${th.c}/${th.slug}/${f}`;
-      const it = { i, t, f, name, perso, label, key, path: `${BASE[th.c]}${key}.${EXT[th.c]}` };
-      if (a != null) it.auteur = db.auteurs[a];
+      // f = « dossier/numéro » pour un dessin Openclipart rangé depuis dans une autre rubrique ; n = le nom seul
+      const key = f.includes('/') ? `${th.c}/${f}` : `${th.c}/${th.dir}/${f}`;
+      const it = { i, t, f, n: f.slice(f.lastIndexOf('/') + 1), name, perso, label, key, path: `${BASE[th.c]}${key}.${EXT[th.c]}` };
+      if (a != null) { it.auteur = db.auteurs[a]; it.kw = kw; }
       it.nname = norm(name);
-      it.hay = norm([name, perso, th.nom, RUBS[th.r].nom, db.collections[db.themes[t][0]].nom, KW[th.slug] || '', kw || '', f].join(' '));
+      it.hay = norm([name, perso, th.nom, RUBS[th.r].nom, db.collections[db.themes[t][0]].nom, KW[th.dir] || '', kw || '', f].join(' '));
       // Variantes : personnages (Cliparts Pro) ou couleurs d'une même forme (images web)
       const k = th.c === 'pro' ? f.slice(0, 1) + f.slice(3) : th.c === 'web' ? t + f.slice(0, 4) : th.c === 'anim' ? animKey(t, f) : '';
       if (k) {
@@ -89,6 +91,8 @@
     const t = p.get('t') || '', d = p.get('d') || (t.includes(':') ? t : '');
     const rub = RUBS.find((x) => x.slug === t), th = THEMES.find((x) => x.key === d);
     state.t = rub ? rub.i : -1;
+    state.s = rub && rub.subs[+p.get('s')] ? +p.get('s') : -1;
+    subFor = state.t;
     state.d = th ? th.i : -1;
     state.fav = p.get('fav') === '1';
     state.sel = SEL.has(p.get('sel')) ? p.get('sel') : '';
@@ -101,6 +105,7 @@
     if (state.q) p.set('q', state.q);
     if (state.c) p.set('c', state.c);
     if (state.t >= 0) p.set('t', RUBS[state.t].slug);
+    if (state.s >= 0) p.set('s', state.s);
     if (state.d >= 0) p.set('d', THEMES[state.d].key);
     if (state.fav) p.set('fav', '1');
     if (state.sel) p.set('sel', state.sel);
@@ -133,7 +138,17 @@
     return a;
   }
 
+  // Sous-thèmes d'une rubrique (tools/rubriques.py, SOUS) : un des mots, ou son pluriel, est un mot de l'image
+  let subFor = -1;
+  function inSub(it, sub) {
+    const ws = (it.ws ||= new Set(it.hay.split(' ')));
+    return sub.words.some((w) => ws.has(w) || ws.has(w + 's') || ws.has(w + 'x'));
+  }
   function update() {
+    if (state.t !== subFor) { state.s = -1; subFor = state.t; } // le sous-thème ne survit pas à un changement de rubrique
+    const subs = state.t >= 0 ? RUBS[state.t].subs : [];
+    const bySub = new Uint32Array(subs.length);
+    let photosHere = 0, inRub = 0;
     const toks = norm(state.q).split(/[^a-z0-9]+/).filter(Boolean);
     const byColl = { '': 0, pro: 0, mc: 0, photos: 0, web: 0, szene: 0, imsi: 0, anim: 0, masterclips: 0, mphotos: 0, openclipart: 0 };
     const byTheme = new Uint32Array(RUBS.length);
@@ -143,7 +158,10 @@
     for (const it of ITEMS) {
       if (state.fav && !favs.has(it.path)) continue;
       if (sel && !sel.has(it.i)) continue;
-      if (!visible(it.i)) continue;
+      if (!state.adult && ADULT.has(it.i)) continue;
+      const th = THEMES[it.t], photo = PHOTO.has(th.c);
+      // Photo masquée : on note seulement qu'il y en aurait, pour n'afficher le bouton Photos que s'il sert à quelque chose
+      const hidden = photo && !state.photos && !PHOTO.has(state.c);
       let ok = true, sc = 0;
       for (const tk of toks) {
         const at = it.hay.indexOf(tk);
@@ -153,12 +171,20 @@
       }
       if (!ok) continue;
       if (toks.length && it.nname === toks.join(' ')) sc += 5;
-      const th = THEMES[it.t];
+      if (hidden) {
+        if ((!state.c || th.c === state.c) && (state.d < 0 || it.t === state.d) && (state.t < 0 || th.r === state.t)
+          && (state.s < 0 || inSub(it, subs[state.s]))) photosHere++;
+        continue;
+      }
       byColl['']++; byColl[th.c]++;
       if (state.c && th.c !== state.c) continue;
       if (state.d >= 0 && it.t !== state.d) continue;
       byTheme[th.r]++;
       if (state.t >= 0 && th.r !== state.t) continue;
+      inRub++;
+      for (let k = 0; k < subs.length; k++) if (inSub(it, subs[k])) bySub[k]++;
+      if (state.s >= 0 && !inSub(it, subs[state.s])) continue;
+      if (photo) photosHere++;
       scores[it.i] = sc;
       out.push(it.i);
     }
@@ -176,7 +202,9 @@
     renderColls(byColl);
     renderThemes(byTheme, toks.length > 0 || state.fav);
     renderChips();
+    renderSubs(subs, bySub, inRub);
     renderEdito(home && !state.c);
+    $('#photos-btn').hidden = !photosHere || PHOTO.has(state.c);
     $('#fav-only').setAttribute('aria-pressed', state.fav);
     $('#photos-btn').setAttribute('aria-pressed', state.photos);
     $('#shuffle').classList.toggle('toggle', true);
@@ -191,7 +219,7 @@
   // ---------- Barre latérale ----------
   function renderColls(counts) {
     const box = $('#colls');
-    const list = [{ id: '', nom: 'Toutes les collections', sub: '7 CD-ROM et Openclipart' }, ...DB.collections.map((c) => ({ id: c.id, nom: c.nom, sub: `${c.editeur.split(' (')[0]}, ${c.annee}` }))];
+    const list = [{ id: '', nom: 'Toutes les collections', sub: '7 CD-ROM et Openclipart' }, ...DB.collections.map((c) => ({ id: c.id, nom: c.nom, sub: c.editeur.split(' (')[0] + (c.annee ? ', ' + c.annee : '') }))];
     box.innerHTML = list.map((c) => `<button class="coll" role="radio" type="button" data-c="${c.id}" aria-checked="${state.c === c.id}">
       <span class="dot" style="background:${COLL_COLOR[c.id]}"></span><span>${c.nom}<small>${c.sub}</small></span><span class="n">${counts ? fmt(counts[c.id]) : ''}</span></button>`).join('');
   }
@@ -325,6 +353,18 @@
     if (state.seed) chips.push(['mix', 'Mélangé']);
     $('#active').innerHTML = chips.map(([k, l]) => `<button class="chip" type="button" data-k="${k}" aria-label="Retirer le filtre ${l}">${l}<svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></button>`).join('');
   }
+  function renderSubs(subs, counts, n) {
+    const box = $('#subs');
+    box.hidden = !subs.length;
+    if (box.hidden) return;
+    box.innerHTML = `<button class="chip" type="button" data-s="-1" aria-pressed="${state.s < 0}">Tout <small>${fmt(n)}</small></button>`
+      + subs.map((x, k) => counts[k] ? `<button class="chip" type="button" data-s="${k}" aria-pressed="${state.s === k}">${esc(x.nom)} <small>${fmt(counts[k])}</small></button>` : '').join('');
+  }
+  $('#subs').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-s]'); if (!b) return;
+    state.s = +b.dataset.s;
+    update(); scrollTop();
+  });
   $('#active').addEventListener('click', (e) => {
     const b = e.target.closest('.chip'); if (!b) return;
     ({ t: () => (state.t = -1), d: () => (state.d = -1), sel: () => (state.sel = ''), fav: () => (state.fav = false), mix: () => (state.seed = 0) })[b.dataset.k]();
@@ -366,7 +406,7 @@
       el.type = 'button';
       el.className = `tile k-${THEMES[it.t].c}` + (favs.has(it.path) ? ' fav' : '');
       el.dataset.r = r;
-      const lbl = !it.name && state.d === it.t ? 'n° ' + it.f.replace(/^\D+/, '') : it.label;
+      const lbl = !it.name && state.d === it.t ? 'n° ' + it.n.replace(/^\D+/, '') : it.label;
       el.title = it.label;
       el.innerHTML = `<span class="pic"><img src="${it.path}" alt="" loading="lazy" decoding="async"></span><span class="lbl">${esc(lbl)}</span>`;
       el.setAttribute('aria-label', it.label);
@@ -389,6 +429,14 @@
     clearTimeout(deb);
     deb = setTimeout(() => { state.q = e.target.value.trim(); state.seed = 0; state.sel = ''; update(); scrollTop(); }, 90);
   });
+  // Mobile : la loupe ouvre la recherche et descend jusqu'à « Toutes les images »
+  $('#search-btn').addEventListener('click', () => {
+    $('.top').classList.add('searching');
+    $('#q').focus();
+    const h = $('#edito').hidden ? null : [...$('#edito').querySelectorAll('.edito-h')].pop();
+    if (h) h.scrollIntoView({ block: 'start' });
+  });
+  $('#q').addEventListener('blur', () => { if (!$('#q').value) $('.top').classList.remove('searching'); });
   $('#fav-only').addEventListener('click', () => { state.fav = !state.fav; update(); scrollTop(); });
   $('#photos-btn').addEventListener('click', () => {
     state.photos = !state.photos; store.set('photos', state.photos);
@@ -434,7 +482,7 @@
     $('#d-img').alt = it.label;
     $('#d-stage').className = `stage k-${th.c}`;
     $('#d-img').style.width = '';
-    $('#d-coll').textContent = `${coll.nom} · ${coll.annee}`;
+    $('#d-coll').textContent = coll.annee ? `${coll.nom} · ${coll.annee}` : coll.nom;
     $('#d-title').textContent = it.name || th.nom;
     $('#d-meta').innerHTML = [
       `<button class="tag" type="button" data-act="coll" style="box-shadow:inset 6px 0 0 ${COLL_COLOR[th.c]}">${coll.nom}</button>`,
@@ -442,9 +490,12 @@
       th.nom !== RUBS[th.r].nom ? `<button class="tag sub" type="button" data-act="folder" title="Dossier du CD">${esc(th.nom)}</button>` : '',
       it.perso ? `<button class="tag" type="button" data-act="perso">avec ${esc(it.perso)}</button>` : '',
       th.c === 'web' ? `<span class="tag file">forme ${it.f.slice(0, 4)} · couleur ${+it.f.slice(5)}</span>` : '',
-      `<span class="tag file" id="d-file">${it.f}.${EXT[th.c]}</span>`,
+      `<span class="tag file" id="d-file">${it.n}.${EXT[th.c]}</span>`,
       it.auteur ? `<a class="tag" href="https://openclipart.org/artist/${encodeURIComponent(it.auteur)}" target="_blank" rel="noopener" title="Ses dessins sur Openclipart">par ${esc(it.auteur)}</a>` : '',
-      th.c === 'openclipart' ? `<a class="tag" href="https://openclipart.org/detail/${it.f}" target="_blank" rel="noopener">Fiche Openclipart</a>` : '',
+      th.c === 'openclipart' ? `<a class="tag" href="https://openclipart.org/detail/${it.n}" target="_blank" rel="noopener">Fiche Openclipart</a>` : '',
+      // Mots-clés d'Openclipart (traduits quand on sait, puis anglais), sans l'auteur : chacun lance une recherche
+      it.kw ? `<span class="kw-list"><span class="eyebrow">Mots-clés</span>${it.kw.split(' ').filter((w) => w && w !== it.auteur.toLowerCase()).slice(0, 16)
+        .map((w) => `<button class="tag kw" type="button" data-act="q" data-q="${esc(w)}">${esc(w)}</button>`).join('')}</span>` : '',
     ].join('');
     const dl = $('#d-svg');
     dl.href = it.path;
@@ -456,7 +507,7 @@
       const img = $('#d-img');
       const dims = () => {
         const f = $('#d-file');
-        if (f && img.naturalWidth) f.textContent = `${it.f}.${EXT[th.c]} · ${img.naturalWidth}×${img.naturalHeight} px`;
+        if (f && img.naturalWidth) f.textContent = `${it.n}.${EXT[th.c]} · ${img.naturalWidth}×${img.naturalHeight} px`;
         // Les images web sont minuscules : on les agrandit en pixels nets, sans dépasser la scène
         img.style.width = th.c === 'web' || th.c === 'anim' ? Math.min(img.naturalWidth * 4, 440) + 'px' : '';
       };
@@ -542,7 +593,7 @@
   }
   function fileBase(it) {
     const s = norm(it.label).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    return `${s || 'clipart'}-${it.f}`;
+    return `${s || 'clipart'}-${it.n}`;
   }
   function setFav(it) {
     const on = favs.has(it.path);
@@ -564,6 +615,7 @@
     if (b.dataset.act === 'theme') { state.t = th.r; state.d = -1; state.q = ''; }
     if (b.dataset.act === 'folder') { state.c = th.c; state.t = -1; state.d = th.i; state.q = ''; }
     if (b.dataset.act === 'perso') { state.q = it.perso; state.c = 'pro'; state.t = -1; state.d = -1; }
+    if (b.dataset.act === 'q') { state.q = b.dataset.q; state.c = ''; state.t = -1; state.d = -1; }
     state.seed = 0; state.sel = '';
     $('#q').value = state.q;
     dlg.close(); art.close(); update(); scrollTop();
